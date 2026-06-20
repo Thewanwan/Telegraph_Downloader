@@ -1,0 +1,53 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS
+        run: flutter build macos --release
+
+      - name: Create DMG
+        run: |
+          brew install create-dmg
+          create-dmg \
+            --volname "Telegraph Downloader" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "Telegraph Downloader.app" 175 190 \
+            --hide-extension "Telegraph Downloader.app" \
+            --app-drop-link 425 190 \
+            build/macos/TelegraphDownloader.dmg \
+            build/macos/Build/Products/Release/
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegraph-downloader-macos
+          path: build/macos/TelegraphDownloader.dmg
+
+      - name: Release DMG
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/macos/TelegraphDownloader.dmg
+          generate_release_notes: true

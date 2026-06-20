@@ -1,9 +1,60 @@
-__pycache__/
+# Dart/Flutter
+.dart_tool/
+.packages
 build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# macOS
+*.DS_Store
+Pods/
+
+# Android
+android/.gradle/
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/local.properties
+android/key.properties
+*.jks
+*.keystore
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Runner.xcworkspace/xcshareddata/
+
+# Windows
+windows/flutter/ephemeral/
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
+
+# Linux
+linux/flutter/ephemeral/
+
+# Build artifacts
 dist/
+*.apk
+*.aab
+*.ipa
+*.dmg
+*.exe
+*.deb
+*.AppImage
+*.app
+
+# Python (legacy)
+__pycache__/
 *.pyc
 *.pyo
-*.exe
-*.app
-*.dmg
-*.apk

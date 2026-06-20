@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Telegraph Downloader
+Comment=Telegraph image album downloader
+Exec=/usr/bin/telegraph_downloader
+Icon=telegraph-downloader
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=telegraph;downloader;images;

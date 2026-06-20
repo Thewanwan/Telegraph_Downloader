@@ -1,8 +1,18 @@
 # Telegraph Image Downloader
 
-A desktop tool built with Tkinter (customtkinter) that uses multithreading to batch download image albums published on `telegra.ph`.
+A cross-platform desktop & mobile tool built with Flutter that batch downloads image albums published on `telegra.ph`.
 
 ![](images.png)
+
+## Supported Platforms
+
+| Platform | Format | Status |
+|----------|--------|--------|
+| Android | APK | ✅ Auto-built via GitHub Actions |
+| iOS | IPA | ✅ Auto-built via GitHub Actions |
+| macOS | DMG | ✅ Auto-built via GitHub Actions |
+| Windows | EXE | ✅ Auto-built via GitHub Actions |
+| Linux | DEB / AppImage | ✅ Auto-built via GitHub Actions |
 
 ## Features
 
@@ -11,26 +21,75 @@ A desktop tool built with Tkinter (customtkinter) that uses multithreading to ba
 - **Dark/Light theme** — One-click toggle with auto-remembered preference
 - **Download history** — Automatically saves the last 100 download records
 - **Real-time progress** — View download status and progress for each album
-- **Keyboard shortcuts** — `Ctrl+V` paste links, `Ctrl+Enter` start download, `Ctrl+S` export log
 - **Auto retry** — Built-in retry mechanism for unstable networks
 - **Persistent config** — All settings auto-saved and restored on next launch
 
 ## Usage
 
-### Requirements
-
-- Python 3.8+
-
-### Install dependencies
+### Run from source
 
 ```bash
-pip install -r requirements.txt
+# Install Flutter SDK: https://docs.flutter.dev/get-started/install
+flutter pub get
+flutter run
 ```
 
-### Launch
+### Download prebuilt releases
+
+Visit the [Releases](https://github.com/Thewanwan/Telegraph_Downloader/releases) page to download the installer for your platform.
+
+## Development
+
+### Project Structure
+
+```
+lib/
+├── main.dart                    # Entry point
+└── src/
+    ├── models/
+    │   ├── download_config.dart   # Download config model
+    │   ├── album_progress.dart    # Progress model
+    │   └── download_result.dart   # Result model
+    ├── services/
+    │   ├── network_service.dart   # Network request service
+    │   ├── page_parser.dart       # Page parser service
+    │   ├── config_service.dart    # Config management service
+    │   └── download_service.dart  # Download management service
+    ├── screens/
+    │   └── home_screen.dart       # Main screen
+    ├── widgets/
+    │   ├── url_input_card.dart    # URL input component
+    │   ├── progress_card.dart     # Progress display component
+    │   ├── log_card.dart          # Log component
+    │   └── settings_sheet.dart    # Settings panel
+    └── utils/
+        └── formatters.dart        # Formatting utilities
+.github/workflows/
+├── build-android.yml              # Android build
+├── build-ios.yml                  # iOS build
+├── build-macos.yml                # macOS build
+├── build-windows.yml              # Windows build
+├── build-linux.yml                # Linux build
+└── ci.yml                         # CI pipeline
+```
+
+### Local Build
 
 ```bash
-python Telegraph_downloader.py
+# Android
+flutter build apk --release --split-per-abi
+
+# iOS (requires macOS + Xcode)
+flutter build ios --release
+
+# macOS
+flutter build macos --release
+
+# Windows
+flutter build windows --release
+
+# Linux
+flutter build linux --release
 ```
 
 ## Keyboard Shortcuts
@@ -39,18 +98,13 @@ python Telegraph_downloader.py
 |----------|--------|
 | `Ctrl+V` | Paste links into input field |
 | `Ctrl+Enter` | Start download |
-| `Ctrl+S` | Export log |
 
 ## Network Notes
 
 `telegra.ph` requires a proxy to access in certain regions.
 
-- **macOS**: Enable global proxy
-- **Windows**: System global proxy may not work; use tools like `natapp` for traffic forwarding
-
-## Build
-
-See [BUILD.md](BUILD.md) for packaging instructions.
+- **Mobile**: Use a network environment that supports proxy
+- **Desktop**: Enable global proxy or use tools like `natapp` for traffic forwarding
 
 ## License
 
