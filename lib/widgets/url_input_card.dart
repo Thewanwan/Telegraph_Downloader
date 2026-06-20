@@ -22,27 +22,13 @@ class UrlInputCard extends StatelessWidget {
             const SizedBox(height: 8),
             TextField(
               controller: controller,
-              maxLines: 5,
-              minLines: 3,
+              maxLines: 4,
+              minLines: 2,
               decoration: const InputDecoration(
-                hintText: '在此输入链接...\n多个链接请换行分隔',
+                hintText: '在此输入 telegra.ph 链接...\n多个链接请换行分隔',
                 border: OutlineInputBorder(),
               ),
               style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.info_outline,
-                    size: 14, color: Theme.of(context).colorScheme.outline),
-                const SizedBox(width: 4),
-                Text(
-                  'Ctrl+V 粘贴 | Ctrl+Enter 开始下载',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                ),
-              ],
             ),
           ],
         ),

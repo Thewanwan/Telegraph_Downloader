@@ -36,7 +36,7 @@ class NetworkService {
         await _backoff(retries);
       }
     }
-    throw Exception('Max retries exceeded');
+    throw Exception('超过最大重试次数');
   }
 
   Future<int> downloadImage(
@@ -87,11 +87,11 @@ class NetworkService {
         rethrow;
       }
     }
-    throw Exception('Max retries exceeded');
+    throw Exception('超过最大重试次数');
   }
 
-  void _backoff(int retry) =>
-      Future.delayed(Duration(milliseconds: (config.retryBackoff * 1000 * retry).toInt()));
+  void _backoff(int retry) => Future.delayed(
+      Duration(milliseconds: (config.retryBackoff * 1000 * retry).toInt()));
 
   void _cleanup(File file) {
     if (file.existsSync()) file.deleteSync();

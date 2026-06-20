@@ -7,7 +7,6 @@ class AlbumProgress {
   int downloaded;
   int failed;
   AlbumStatus status;
-  List<String> imageUrls;
 
   AlbumProgress({
     required this.title,
@@ -16,7 +15,6 @@ class AlbumProgress {
     this.downloaded = 0,
     this.failed = 0,
     this.status = AlbumStatus.waiting,
-    this.imageUrls = const [],
   });
 
   double get progress =>

@@ -66,7 +66,8 @@ class DownloadService extends ChangeNotifier {
 
         try {
           final html = await network.fetchPage(url);
-          final title = PageParser.extractTitle(html, fallback: '未命名_${i + 1}');
+          final title =
+              PageParser.extractTitle(html, fallback: '未命名_${i + 1}');
           final imageUrls = PageParser.extractImageUrls(html);
 
           if (imageUrls.isEmpty) {
@@ -79,7 +80,6 @@ class DownloadService extends ChangeNotifier {
             title: title,
             url: url,
             totalImages: imageUrls.length,
-            imageUrls: imageUrls,
             status: AlbumStatus.downloading,
           );
           _albums.add(album);
@@ -89,14 +89,16 @@ class DownloadService extends ChangeNotifier {
           final folder = p.join(basePath, title);
           await Directory(folder).create(recursive: true);
 
-          final ar = await _downloadAlbum(imageUrls, folder, album, config, network);
+          final ar = await _downloadAlbum(
+              imageUrls, folder, album, config, network);
 
           _result.success++;
           _result.totalImages += ar.downloaded;
           _result.totalBytes += ar.totalBytes;
           album.downloaded = ar.downloaded;
           album.failed = ar.failed;
-          album.status = ar.failed > 0 ? AlbumStatus.failed : AlbumStatus.completed;
+          album.status =
+              ar.failed > 0 ? AlbumStatus.failed : AlbumStatus.completed;
         } on Exception catch (e) {
           _log('  ❌ 错误: $e');
           _result.failed++;
@@ -160,7 +162,8 @@ class DownloadService extends ChangeNotifier {
     return _AlbumDownloadResult(downloaded, failed, totalBytes);
   }
 
-  String _uniquePath(int idx, String url, String folder, Map<String, int> seen) {
+  String _uniquePath(
+      int idx, String url, String folder, Map<String, int> seen) {
     final uri = Uri.parse(url);
     var name = p.basename(uri.path);
     if (name.isEmpty || name == '/') name = 'image_$idx.jpg';

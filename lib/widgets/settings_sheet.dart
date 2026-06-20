@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import '../services/config_service.dart';
+import '../../app/services/config_service.dart';
 
 class SettingsSheet extends StatelessWidget {
   const SettingsSheet({super.key});
@@ -36,10 +36,8 @@ class SettingsSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                '下载设置',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text('下载设置',
+                  style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 16),
 
               Text('保存路径',
@@ -90,7 +88,8 @@ class SettingsSheet extends StatelessWidget {
                 items: [5, 10, 15, 30, 60],
                 onChanged: (v) {
                   if (v != null) {
-                    config.setDownloadConfig(dc.copyWith(requestTimeout: v));
+                    config
+                        .setDownloadConfig(dc.copyWith(requestTimeout: v));
                   }
                 },
               ),
@@ -130,7 +129,7 @@ class SettingsSheet extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Text(
-                'Telegraph Downloader v1.0\n'
+                'Telegraph Downloader v1.0.1\n'
                 '跨平台 Telegraph 图册批量下载工具\n'
                 '支持 Android / iOS / macOS / Windows / Linux',
                 style: Theme.of(context).textTheme.bodySmall,

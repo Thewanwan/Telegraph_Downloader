@@ -43,8 +43,7 @@ class ConfigService extends ChangeNotifier {
     }
     final historyJson = _prefs.getString(_historyKey);
     if (historyJson != null) {
-      _history =
-          List<Map<String, dynamic>>.from(jsonDecode(historyJson));
+      _history = List<Map<String, dynamic>>.from(jsonDecode(historyJson));
     }
   }
 

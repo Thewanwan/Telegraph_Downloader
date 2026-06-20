@@ -1,5 +1,4 @@
 import 'package:html/parser.dart' as parser;
-import 'package:html/dom.dart';
 
 class PageParser {
   static const String baseUrl = 'https://telegra.ph';

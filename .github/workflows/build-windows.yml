@@ -22,8 +22,10 @@ jobs:
           flutter-version: '3.24.5'
           channel: 'stable'
 
-      - name: Generate Windows project
-        run: flutter create --project-name telegraph_downloader --org com.telegraph --platforms=windows --overwrite .
+      - name: Generate Windows platform
+        run: |
+          flutter create --project-name telegraph_downloader --org com.telegraph --platforms=windows C:\temp\flutter_temp
+          xcopy C:\temp\flutter_temp\windows windows /E /I /Y
 
       - name: Install dependencies
         run: flutter pub get

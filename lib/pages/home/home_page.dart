@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import '../services/download_service.dart';
-import '../services/config_service.dart';
-import '../widgets/url_input_card.dart';
-import '../widgets/progress_card.dart';
-import '../widgets/log_card.dart';
-import '../widgets/settings_sheet.dart';
+import '../../app/services/download_service.dart';
+import '../../app/services/config_service.dart';
+import '../../widgets/url_input_card.dart';
+import '../../widgets/progress_card.dart';
+import '../../widgets/log_card.dart';
+import '../../widgets/settings_sheet.dart';
+import '../../widgets/history_dialog.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomePageState extends State<HomePage> {
   final _urlController = TextEditingController();
   final _scrollController = ScrollController();
 
@@ -42,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final urls = _parseUrls(_urlController.text);
     if (urls.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请输入至少一个链接')),
       );
@@ -80,12 +82,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final downloadService = context.watch<DownloadService>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Telegraph Downloader'),
+        title: const Text('Telegraph 图片下载器'),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(
@@ -98,39 +100,48 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.history),
-            onPressed: () => _showHistory(context),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => const HistoryDialog(),
+            ),
             tooltip: '历史记录',
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => _showSettings(context),
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => const SettingsSheet(),
+            ),
             tooltip: '设置',
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            UrlInputCard(controller: _urlController),
-            const SizedBox(height: 12),
-            ProgressCard(
-              isDownloading: downloadService.isDownloading,
-              albums: downloadService.albums,
-              overallProgress: downloadService.overallProgress,
-              completedAlbums: downloadService.completedAlbums,
-              totalAlbums: downloadService.totalAlbums,
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: LogCard(
-                log: downloadService.currentLog,
-                scrollController: _scrollController,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              UrlInputCard(controller: _urlController),
+              const SizedBox(height: 12),
+              ProgressCard(
+                isDownloading: downloadService.isDownloading,
+                albums: downloadService.albums,
+                overallProgress: downloadService.overallProgress,
+                completedAlbums: downloadService.completedAlbums,
+                totalAlbums: downloadService.totalAlbums,
               ),
-            ),
-            const SizedBox(height: 12),
-            _buildActionButtons(downloadService),
-          ],
+              const SizedBox(height: 12),
+              Expanded(
+                child: LogCard(
+                  log: downloadService.currentLog,
+                  scrollController: _scrollController,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildActionButtons(downloadService),
+            ],
+          ),
         ),
       ),
     );
@@ -151,64 +162,12 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: service.cancel,
-              icon: const Icon(Icons.stop, color: Colors.red),
+              icon: const Icon(Icons.stop_circle, color: Colors.red),
               label: const Text('取消', style: TextStyle(color: Colors.red)),
             ),
           ),
         ],
       ],
-    );
-  }
-
-  void _showSettings(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => const SettingsSheet(),
-    );
-  }
-
-  void _showHistory(BuildContext context) {
-    final config = context.read<ConfigService>();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('下载历史'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 400,
-          child: config.history.isEmpty
-              ? const Center(child: Text('暂无记录'))
-              : ListView.builder(
-                  itemCount: config.history.length,
-                  itemBuilder: (ctx, i) {
-                    final entry = config.history[i];
-                    return ListTile(
-                      leading: const Icon(Icons.download_done),
-                      title: Text('${entry['success'] ?? 0} 个图册'),
-                      subtitle: Text(
-                        '${entry['time']?.toString().substring(0, 19) ?? ''}'
-                        ' | ${(entry['images'] ?? 0)} 张图片',
-                      ),
-                      dense: true,
-                    );
-                  },
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              config.clearHistory();
-              Navigator.pop(ctx);
-            },
-            child: const Text('清空'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('关闭'),
-          ),
-        ],
-      ),
     );
   }
 }
