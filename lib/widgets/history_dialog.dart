@@ -39,12 +39,12 @@ class HistoryDialog extends StatelessWidget {
         TextButton(
           onPressed: () {
             config.clearHistory();
-            Navigator.pop(ctx);
+            Navigator.pop(context);
           },
           child: const Text('清空'),
         ),
         TextButton(
-          onPressed: () => Navigator.pop(ctx),
+          onPressed: () => Navigator.pop(context),
           child: const Text('关闭'),
         ),
       ],
