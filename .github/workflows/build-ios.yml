@@ -31,10 +31,20 @@ jobs:
       - name: Build iOS (debug for simulator)
         run: flutter build ios --debug --simulator
 
-      - name: Create ZIP
+      - name: Find and zip iOS build
         run: |
-          cd build/ios/iosimulator
-          zip -r ../../TelegraphDownloader-iOS.zip Runner.app
+          IOS_DIR=$(find build -type d -name "ios" | head -1)
+          echo "Found iOS build dir: $IOS_DIR"
+          find build -name "Runner.app" -type d
+          SIM_DIR=$(find build -path "*/ios*/Runner.app" -type d | head -1)
+          if [ -z "$SIM_DIR" ]; then
+            echo "Runner.app not found, listing build contents:"
+            find build -type f -name "*.app" 2>/dev/null
+            find build -type d 2>/dev/null | head -50
+            exit 1
+          fi
+          cd "$(dirname "$SIM_DIR")"
+          zip -r "$GITHUB_WORKSPACE/build/TelegraphDownloader-iOS.zip" Runner.app
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -46,5 +56,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
           files: build/TelegraphDownloader-iOS.zip
-          generate_release_notes: true

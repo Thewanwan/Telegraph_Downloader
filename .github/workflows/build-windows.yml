@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Setup Visual Studio
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Build Windows
         run: flutter build windows --release
 
@@ -41,5 +44,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
           files: build/windows/x64/runner/Release/telegraph_downloader.exe
-          generate_release_notes: true

@@ -1,0 +1,32 @@
+name: Publish Release
+
+on:
+  workflow_run:
+    workflows: ["Build Android APK", "Build macOS App", "Build Linux DEB", "Build Windows EXE", "Build iOS IPA"]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: startsWith(github.event.workflow_run.head_branch, 'refs/tags/') || contains(github.event.workflow_run.head_branch, 'v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for all builds
+        run: sleep 30
+
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases --jq '.[0] | select(.draft==true) | .id' 2>/dev/null || true)
+          if [ -n "$RELEASE_ID" ]; then
+            gh api -X PATCH repos/${{ github.repository }}/releases/$RELEASE_ID -f draft=false
+            echo "Release published!"
+          else
+            echo "No draft release found to publish"
+          fi
