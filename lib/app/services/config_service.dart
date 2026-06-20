@@ -77,13 +77,15 @@ class ConfigService extends ChangeNotifier {
         type: StorageDirectory.downloads,
       );
       if (dirs != null && dirs.isNotEmpty) {
-        final dlDir = Directory('${dirs.first.path}/TelegraphDownloader');
+        final dlDir =
+            Directory('${dirs.first.path}/TelegraphDownloader');
         await dlDir.create(recursive: true);
         return dlDir.path;
       }
       final extDir = await getExternalStorageDirectory();
       if (extDir != null) {
-        final dlDir = Directory('${extDir.path}/TelegraphDownloader');
+        final dlDir =
+            Directory('${extDir.path}/TelegraphDownloader');
         await dlDir.create(recursive: true);
         return dlDir.path;
       }
@@ -127,7 +129,11 @@ class ConfigService extends ChangeNotifier {
   }
 
   void addHistory(Map<String, dynamic> entry) {
+    final urls = entry['urls'] as List<String>? ?? [];
+    final truncatedUrls = urls.length > 10 ? urls.sublist(0, 10) : urls;
+
     final safeEntry = {
+      'urls': truncatedUrls,
       'time': entry['time'],
       'success': entry['success'],
       'failed': entry['failed'],
@@ -137,8 +143,8 @@ class ConfigService extends ChangeNotifier {
       'path': entry['path'],
     };
     _history.insert(0, safeEntry);
-    if (_history.length > 50) {
-      _history = _history.sublist(0, 50);
+    if (_history.length > 30) {
+      _history = _history.sublist(0, 30);
     }
     _prefs.setString(_historyKey, jsonEncode(_history));
     notifyListeners();

@@ -183,14 +183,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               onPressed: () => context.read<ConfigService>().toggleTheme(),
               tooltip: '切换主题',
             ),
-            IconButton(
-              icon: const Icon(Icons.history),
-              onPressed: () => showDialog(
-                context: context,
-                builder: (_) => const HistoryDialog(),
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => HistoryDialog(
+                onRedownload: (urls) {
+                  _urlController.text = urls;
+                },
               ),
-              tooltip: '历史记录',
             ),
+            tooltip: '历史记录',
+          ),
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () => showModalBottomSheet(
