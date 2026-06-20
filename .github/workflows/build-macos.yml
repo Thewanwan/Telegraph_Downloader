@@ -19,6 +19,9 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
 
+      - name: Generate macOS project
+        run: flutter create --platforms=macos .
+
       - name: Install dependencies
         run: flutter pub get
 

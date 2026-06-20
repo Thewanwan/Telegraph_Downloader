@@ -26,6 +26,9 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
 
+      - name: Generate Linux project
+        run: flutter create --platforms=linux .
+
       - name: Install Flutter dependencies
         run: flutter pub get
 
