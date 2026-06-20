@@ -27,7 +27,7 @@ jobs:
           channel: 'stable'
 
       - name: Generate Linux project
-        run: flutter create --platforms=linux .
+        run: flutter create --project-name telegraph_downloader --platforms=linux .
 
       - name: Install Flutter dependencies
         run: flutter pub get

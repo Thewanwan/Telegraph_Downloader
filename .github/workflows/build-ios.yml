@@ -20,7 +20,7 @@ jobs:
           channel: 'stable'
 
       - name: Generate iOS project
-        run: flutter create --platforms=ios .
+        run: flutter create --project-name telegraph_downloader --platforms=ios .
 
       - name: Install dependencies
         run: flutter pub get

@@ -20,7 +20,7 @@ jobs:
           channel: 'stable'
 
       - name: Generate Windows project
-        run: flutter create --platforms=windows .
+        run: flutter create --project-name telegraph_downloader --platforms=windows .
 
       - name: Install dependencies
         run: flutter pub get
