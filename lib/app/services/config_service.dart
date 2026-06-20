@@ -32,33 +32,70 @@ class ConfigService extends ChangeNotifier {
   }
 
   void _loadAll() {
-    final themeIndex = _prefs.getInt(_themeKey);
-    if (themeIndex != null &&
-        themeIndex >= 0 &&
-        themeIndex < ThemeMode.values.length) {
-      _themeMode = ThemeMode.values[themeIndex];
-    }
+    try {
+      final themeIndex = _prefs.getInt(_themeKey);
+      if (themeIndex != null &&
+          themeIndex >= 0 &&
+          themeIndex < ThemeMode.values.length) {
+        _themeMode = ThemeMode.values[themeIndex];
+      }
+    } catch (_) {}
+
     _savePath = _prefs.getString(_savePathKey) ?? '';
-    final configJson = _prefs.getString(_configKey);
-    if (configJson != null) {
-      _downloadConfig = DownloadConfig.fromJson(jsonDecode(configJson));
-    }
-    final historyJson = _prefs.getString(_historyKey);
-    if (historyJson != null) {
-      _history = List<Map<String, dynamic>>.from(jsonDecode(historyJson));
+
+    try {
+      final configJson = _prefs.getString(_configKey);
+      if (configJson != null) {
+        _downloadConfig = DownloadConfig.fromJson(jsonDecode(configJson));
+      }
+    } catch (_) {}
+
+    try {
+      final historyJson = _prefs.getString(_historyKey);
+      if (historyJson != null) {
+        final list = jsonDecode(historyJson);
+        if (list is List) {
+          _history = List<Map<String, dynamic>>.from(
+            list.whereType<Map<String, dynamic>>(),
+          );
+        }
+      }
+    } catch (_) {
+      _history = [];
     }
   }
 
   Future<String> getEffectiveSavePath() async {
-    if (_savePath.isNotEmpty && await Directory(_savePath).exists()) {
-      return _savePath;
+    if (_savePath.isNotEmpty) {
+      try {
+        if (await Directory(_savePath).exists()) return _savePath;
+      } catch (_) {}
     }
-    if (Platform.isAndroid || Platform.isIOS) {
+
+    if (Platform.isAndroid) {
+      final dirs = await getExternalStorageDirectories(
+        type: StorageDirectory.downloads,
+      );
+      if (dirs != null && dirs.isNotEmpty) {
+        final dlDir = Directory('${dirs.first.path}/TelegraphDownloader');
+        await dlDir.create(recursive: true);
+        return dlDir.path;
+      }
+      final extDir = await getExternalStorageDirectory();
+      if (extDir != null) {
+        final dlDir = Directory('${extDir.path}/TelegraphDownloader');
+        await dlDir.create(recursive: true);
+        return dlDir.path;
+      }
+    }
+
+    if (Platform.isIOS) {
       final dir = await getApplicationDocumentsDirectory();
-      final telegraphDir = Directory('${dir.path}/TelegraphDownloader');
-      await telegraphDir.create(recursive: true);
-      return telegraphDir.path;
+      final dlDir = Directory('${dir.path}/TelegraphDownloader');
+      await dlDir.create(recursive: true);
+      return dlDir.path;
     }
+
     final dir = await getDownloadsDirectory();
     if (dir != null) return dir.path;
     final appDir = await getApplicationDocumentsDirectory();
@@ -90,9 +127,18 @@ class ConfigService extends ChangeNotifier {
   }
 
   void addHistory(Map<String, dynamic> entry) {
-    _history.insert(0, entry);
-    if (_history.length > 100) {
-      _history = _history.sublist(0, 100);
+    final safeEntry = {
+      'time': entry['time'],
+      'success': entry['success'],
+      'failed': entry['failed'],
+      'images': entry['images'],
+      'bytes': entry['bytes'],
+      'elapsed': entry['elapsed'],
+      'path': entry['path'],
+    };
+    _history.insert(0, safeEntry);
+    if (_history.length > 50) {
+      _history = _history.sublist(0, 50);
     }
     _prefs.setString(_historyKey, jsonEncode(_history));
     notifyListeners();

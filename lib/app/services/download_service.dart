@@ -14,6 +14,7 @@ class DownloadService extends ChangeNotifier {
   List<AlbumProgress> _albums = [];
   DownloadResult _result = DownloadResult();
   String _currentLog = '';
+  List<String> _logHistory = [];
   int _completedAlbums = 0;
   int _totalAlbums = 0;
 
@@ -21,6 +22,7 @@ class DownloadService extends ChangeNotifier {
   List<AlbumProgress> get albums => List.unmodifiable(_albums);
   DownloadResult get result => _result;
   String get currentLog => _currentLog;
+  List<String> get logHistory => List.unmodifiable(_logHistory);
   int get completedAlbums => _completedAlbums;
   int get totalAlbums => _totalAlbums;
   double get overallProgress =>
@@ -28,6 +30,10 @@ class DownloadService extends ChangeNotifier {
 
   void _log(String message) {
     _currentLog = message;
+    _logHistory.add(message);
+    if (_logHistory.length > 500) {
+      _logHistory = _logHistory.sublist(_logHistory.length - 500);
+    }
     notifyListeners();
   }
 
@@ -45,6 +51,7 @@ class DownloadService extends ChangeNotifier {
     _isCancelled = false;
     _result = DownloadResult();
     _albums.clear();
+    _logHistory.clear();
     _completedAlbums = 0;
     _totalAlbums = urls.length;
     notifyListeners();

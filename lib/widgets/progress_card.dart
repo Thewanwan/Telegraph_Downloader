@@ -71,6 +71,10 @@ class ProgressCard extends StatelessWidget {
   }
 
   Widget _buildAlbumRow(BuildContext context, AlbumProgress album) {
+    final processed = album.downloaded + album.failed;
+    final total = album.totalImages;
+    final displayProgress = total > 0 ? processed / total : 0.0;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -87,7 +91,7 @@ class ProgressCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(2),
               child: LinearProgressIndicator(
-                value: album.progress,
+                value: displayProgress,
                 minHeight: 4,
               ),
             ),

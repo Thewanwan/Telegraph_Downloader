@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class LogCard extends StatelessWidget {
+class LogCard extends StatefulWidget {
   final String log;
   final ScrollController scrollController;
 
@@ -9,6 +9,25 @@ class LogCard extends StatelessWidget {
     required this.log,
     required this.scrollController,
   });
+
+  @override
+  State<LogCard> createState() => _LogCardState();
+}
+
+class _LogCardState extends State<LogCard> {
+  @override
+  void didUpdateWidget(LogCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.log != oldWidget.log && widget.log.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (widget.scrollController.hasClients) {
+          widget.scrollController.jumpTo(
+            widget.scrollController.position.maxScrollExtent,
+          );
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +64,7 @@ class LogCard extends StatelessWidget {
                       : Colors.grey.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: log.isEmpty
+                child: widget.log.isEmpty
                     ? Text(
                         '等待下载任务...',
                         style: TextStyle(
@@ -55,9 +74,9 @@ class LogCard extends StatelessWidget {
                         ),
                       )
                     : SingleChildScrollView(
-                        controller: scrollController,
+                        controller: widget.scrollController,
                         child: Text(
-                          log,
+                          widget.log,
                           style: const TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 12,

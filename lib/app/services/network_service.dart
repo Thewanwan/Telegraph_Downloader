@@ -11,12 +11,18 @@ class NetworkService {
     _client = http.Client();
   }
 
+  Map<String, String> get _headers => {
+        'User-Agent': config.userAgent,
+        'Referer': 'https://telegra.ph/',
+        'Accept': '*/*',
+      };
+
   Future<String> fetchPage(String url) async {
     int retries = 0;
     while (retries <= config.maxRetries) {
       try {
         final response = await _client
-            .get(Uri.parse(url))
+            .get(Uri.parse(url), headers: _headers)
             .timeout(Duration(seconds: config.requestTimeout));
         if (response.statusCode == 200) return response.body;
         if (response.statusCode == 429 || response.statusCode >= 500) {
@@ -50,11 +56,17 @@ class NetworkService {
       final file = File(savePath);
       try {
         final request = http.Request('GET', Uri.parse(url));
+        request.headers.addAll(_headers);
         final response = await _client
             .send(request)
             .timeout(Duration(seconds: config.downloadTimeout));
 
         if (response.statusCode == 200) {
+          final contentLength = response.contentLength;
+          if (contentLength != null && contentLength > 100 * 1024 * 1024) {
+            throw Exception('文件过大 (${(contentLength / 1048576).toStringAsFixed(0)}MB)，跳过');
+          }
+
           int totalBytes = 0;
           final sink = file.openWrite(mode: FileMode.write);
           await for (final chunk in response.stream) {
@@ -85,6 +97,9 @@ class NetworkService {
       } on HttpException {
         _cleanup(file);
         rethrow;
+      } catch (e) {
+        _cleanup(file);
+        rethrow;
       }
     }
     throw Exception('超过最大重试次数');
@@ -94,7 +109,9 @@ class NetworkService {
       Duration(milliseconds: (config.retryBackoff * 1000 * retry).toInt()));
 
   void _cleanup(File file) {
-    if (file.existsSync()) file.deleteSync();
+    try {
+      if (file.existsSync()) file.deleteSync();
+    } catch (_) {}
   }
 
   void close() => _client.close();
