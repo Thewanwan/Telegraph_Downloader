@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -68,7 +69,8 @@ class DownloadService extends ChangeNotifier {
 
         try {
           final html = await networkService.fetchPage(url);
-          final title = PageParser.extractTitle(html, fallback: '未命名_${i + 1}');
+          final title =
+              PageParser.extractTitle(html, fallback: '未命名_${i + 1}');
           final imageUrls = PageParser.extractImageUrls(html);
 
           if (imageUrls.isEmpty) {
@@ -92,7 +94,11 @@ class DownloadService extends ChangeNotifier {
           await Directory(folder).create(recursive: true);
 
           final albumResult = await _downloadImages(
-            imageUrls, folder, album, config, networkService,
+            imageUrls,
+            folder,
+            album,
+            config,
+            networkService,
           );
 
           _result.success++;
@@ -104,7 +110,6 @@ class DownloadService extends ChangeNotifier {
           album.status = albumResult.failed > 0
               ? AlbumStatus.failed
               : AlbumStatus.completed;
-
         } on Exception catch (e) {
           _log('  ❌ 错误: $e');
           _result.failed++;
@@ -135,9 +140,7 @@ class DownloadService extends ChangeNotifier {
     int failed = 0;
     int totalBytes = 0;
     final seenNames = <String, int>{};
-    final completer = Completer<_AlbumDownloadResult>();
 
-    // Use pools to limit concurrency
     final semaphore = _Semaphore(config.maxWorkers);
     final futures = <Future>[];
 
@@ -198,15 +201,19 @@ class DownloadService extends ChangeNotifier {
   String _buildSummary() {
     final r = _result;
     final buffer = StringBuffer('--- 下载完成 ---\n');
-    buffer.writeln('成功: ${r.success} | 失败: ${r.failed} | 跳过: ${r.skipped}');
-    buffer.writeln('图片: ${r.totalImages} 张 | 大小: ${_formatSize(r.totalBytes)}');
+    buffer.writeln(
+        '成功: ${r.success} | 失败: ${r.failed} | 跳过: ${r.skipped}');
+    buffer.writeln(
+        '图片: ${r.totalImages} 张 | 大小: ${_formatSize(r.totalBytes)}');
     buffer.writeln('耗时: ${_formatTime(r.elapsed)}');
     return buffer.toString();
   }
 
   static String _formatSize(int bytes) {
     if (bytes < 1024) return '${bytes}B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
+    if (bytes < 1024 * 1024) {
+      return '${(bytes / 1024).toStringAsFixed(1)}KB';
+    }
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
   }
 
@@ -231,7 +238,7 @@ class _AlbumDownloadResult {
 class _Semaphore {
   int _count;
   final int _max;
-  final Queue<void> _waitQueue = Queue<void>();
+  final Queue<Completer<void>> _waitQueue = Queue<Completer<void>>();
 
   _Semaphore(this._max) : _count = 0;
 
@@ -241,7 +248,7 @@ class _Semaphore {
       return;
     }
     final completer = Completer<void>();
-    _waitQueue.add(completer.future);
+    _waitQueue.add(completer);
     await completer.future;
     _count++;
   }

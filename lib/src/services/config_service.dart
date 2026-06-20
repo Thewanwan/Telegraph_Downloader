@@ -30,13 +30,16 @@ class ConfigService extends ChangeNotifier {
   }
 
   void _loadAll() {
-    final themeIndex = _prefs.getInt(_themeKey) ?? 2;
-    _themeMode = ThemeMode.values[themeIndex];
+    final themeIndex = _prefs.getInt(_themeKey);
+    if (themeIndex != null &&
+        themeIndex >= 0 &&
+        themeIndex < ThemeMode.values.length) {
+      _themeMode = ThemeMode.values[themeIndex];
+    }
     _savePath = _prefs.getString(_savePathKey) ?? '';
     final configJson = _prefs.getString(_configKey);
     if (configJson != null) {
-      _downloadConfig =
-          DownloadConfig.fromJson(jsonDecode(configJson));
+      _downloadConfig = DownloadConfig.fromJson(jsonDecode(configJson));
     }
     final historyJson = _prefs.getString(_historyKey);
     if (historyJson != null) {

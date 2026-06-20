@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/config_service.dart';
-import '../models/download_config.dart';
 
 class SettingsSheet extends StatelessWidget {
   const SettingsSheet({super.key});
@@ -29,7 +28,10 @@ class SettingsSheet extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withOpacity(0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -40,7 +42,6 @@ class SettingsSheet extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Save path
               Text('保存路径',
                   style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
@@ -70,7 +71,6 @@ class SettingsSheet extends StatelessWidget {
               ),
               const Divider(),
 
-              // Thread count
               _buildDropdown<int>(
                 context,
                 label: '线程数',
@@ -78,20 +78,11 @@ class SettingsSheet extends StatelessWidget {
                 items: [2, 4, 8, 12, 16, 20],
                 onChanged: (v) {
                   if (v != null) {
-                    config.setDownloadConfig(
-                      DownloadConfig(
-                        maxWorkers: v,
-                        requestTimeout: dc.requestTimeout,
-                        downloadTimeout: dc.downloadTimeout,
-                        saveFormat: dc.saveFormat,
-                        imageQuality: dc.imageQuality,
-                      ),
-                    );
+                    config.setDownloadConfig(dc.copyWith(maxWorkers: v));
                   }
                 },
               ),
 
-              // Request timeout
               _buildDropdown<int>(
                 context,
                 label: '请求超时（秒）',
@@ -99,20 +90,11 @@ class SettingsSheet extends StatelessWidget {
                 items: [5, 10, 15, 30, 60],
                 onChanged: (v) {
                   if (v != null) {
-                    config.setDownloadConfig(
-                      DownloadConfig(
-                        maxWorkers: dc.maxWorkers,
-                        requestTimeout: v,
-                        downloadTimeout: dc.downloadTimeout,
-                        saveFormat: dc.saveFormat,
-                        imageQuality: dc.imageQuality,
-                      ),
-                    );
+                    config.setDownloadConfig(dc.copyWith(requestTimeout: v));
                   }
                 },
               ),
 
-              // Save format
               _buildDropdown<String>(
                 context,
                 label: '保存格式',
@@ -121,20 +103,11 @@ class SettingsSheet extends StatelessWidget {
                 labels: ['保持原样', 'JPG', 'PNG', 'WebP', 'BMP'],
                 onChanged: (v) {
                   if (v != null) {
-                    config.setDownloadConfig(
-                      DownloadConfig(
-                        maxWorkers: dc.maxWorkers,
-                        requestTimeout: dc.requestTimeout,
-                        downloadTimeout: dc.downloadTimeout,
-                        saveFormat: v,
-                        imageQuality: dc.imageQuality,
-                      ),
-                    );
+                    config.setDownloadConfig(dc.copyWith(saveFormat: v));
                   }
                 },
               ),
 
-              // Image quality (for JPG/WebP)
               if (dc.saveFormat == 'JPG' || dc.saveFormat == 'WebP')
                 _buildSlider(
                   context,
@@ -145,14 +118,7 @@ class SettingsSheet extends StatelessWidget {
                   divisions: 9,
                   onChanged: (v) {
                     config.setDownloadConfig(
-                      DownloadConfig(
-                        maxWorkers: dc.maxWorkers,
-                        requestTimeout: dc.requestTimeout,
-                        downloadTimeout: dc.downloadTimeout,
-                        saveFormat: dc.saveFormat,
-                        imageQuality: v.toInt(),
-                      ),
-                    );
+                        dc.copyWith(imageQuality: v.toInt()));
                   },
                 ),
 
@@ -160,7 +126,6 @@ class SettingsSheet extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 8),
 
-              // About
               Text('关于',
                   style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),

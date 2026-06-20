@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/download_service.dart';
 import '../services/config_service.dart';
-import '../models/download_config.dart';
 import '../widgets/url_input_card.dart';
 import '../widgets/progress_card.dart';
 import '../widgets/log_card.dart';

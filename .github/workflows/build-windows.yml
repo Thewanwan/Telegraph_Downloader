@@ -25,20 +25,15 @@ jobs:
       - name: Build Windows
         run: flutter build windows --release
 
-      - name: Create Installer
-        uses: JonasKs/WiX-Action@v1
-        with:
-          project: windows/installer
-
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
           name: telegraph-downloader-windows
-          path: build/windows/x64/runner/Release/*.exe
+          path: build/windows/x64/runner/Release/
 
-      - name: Release EXE
+      - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/windows/x64/runner/Release/*.exe
+          files: build/windows/x64/runner/Release/telegraph_downloader.exe
           generate_release_notes: true

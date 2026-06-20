@@ -22,6 +22,30 @@ class DownloadConfig {
     this.imageQuality = 95,
   });
 
+  DownloadConfig copyWith({
+    int? maxWorkers,
+    int? requestTimeout,
+    int? downloadTimeout,
+    int? maxRetries,
+    double? retryBackoff,
+    int? chunkSize,
+    String? userAgent,
+    String? saveFormat,
+    int? imageQuality,
+  }) {
+    return DownloadConfig(
+      maxWorkers: maxWorkers ?? this.maxWorkers,
+      requestTimeout: requestTimeout ?? this.requestTimeout,
+      downloadTimeout: downloadTimeout ?? this.downloadTimeout,
+      maxRetries: maxRetries ?? this.maxRetries,
+      retryBackoff: retryBackoff ?? this.retryBackoff,
+      chunkSize: chunkSize ?? this.chunkSize,
+      userAgent: userAgent ?? this.userAgent,
+      saveFormat: saveFormat ?? this.saveFormat,
+      imageQuality: imageQuality ?? this.imageQuality,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'maxWorkers': maxWorkers,
         'requestTimeout': requestTimeout,
