@@ -16,11 +16,11 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.24.5'
           channel: 'stable'
 
       - name: Generate Windows project
-        run: flutter create --project-name telegraph_downloader --platforms=windows .
+        run: flutter create --project-name telegraph_downloader --org com.telegraph --platforms=windows --overwrite .
 
       - name: Install dependencies
         run: flutter pub get
@@ -28,7 +28,7 @@ jobs:
       - name: Build Windows
         run: flutter build windows --release
 
-      - name: Upload EXE
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: telegraph-downloader-windows

@@ -51,14 +51,11 @@ class DownloadService extends ChangeNotifier {
     notifyListeners();
 
     final stopwatch = Stopwatch()..start();
-    final networkService = NetworkService(config);
+    final network = NetworkService(config);
 
     try {
       for (int i = 0; i < urls.length; i++) {
-        if (_isCancelled) {
-          _log('已取消下载');
-          break;
-        }
+        if (_isCancelled) break;
 
         final url = urls[i].trim();
         if (url.isEmpty) continue;
@@ -68,9 +65,8 @@ class DownloadService extends ChangeNotifier {
         notifyListeners();
 
         try {
-          final html = await networkService.fetchPage(url);
-          final title =
-              PageParser.extractTitle(html, fallback: '未命名_${i + 1}');
+          final html = await network.fetchPage(url);
+          final title = PageParser.extractTitle(html, fallback: '未命名_${i + 1}');
           final imageUrls = PageParser.extractImageUrls(html);
 
           if (imageUrls.isEmpty) {
@@ -93,23 +89,14 @@ class DownloadService extends ChangeNotifier {
           final folder = p.join(basePath, title);
           await Directory(folder).create(recursive: true);
 
-          final albumResult = await _downloadImages(
-            imageUrls,
-            folder,
-            album,
-            config,
-            networkService,
-          );
+          final ar = await _downloadAlbum(imageUrls, folder, album, config, network);
 
           _result.success++;
-          _result.totalImages += albumResult.downloaded;
-          _result.totalBytes += albumResult.totalBytes;
-
-          album.downloaded = albumResult.downloaded;
-          album.failed = albumResult.failed;
-          album.status = albumResult.failed > 0
-              ? AlbumStatus.failed
-              : AlbumStatus.completed;
+          _result.totalImages += ar.downloaded;
+          _result.totalBytes += ar.totalBytes;
+          album.downloaded = ar.downloaded;
+          album.failed = ar.failed;
+          album.status = ar.failed > 0 ? AlbumStatus.failed : AlbumStatus.completed;
         } on Exception catch (e) {
           _log('  ❌ 错误: $e');
           _result.failed++;
@@ -117,7 +104,7 @@ class DownloadService extends ChangeNotifier {
         notifyListeners();
       }
     } finally {
-      networkService.close();
+      network.close();
       _completedAlbums = _totalAlbums;
       stopwatch.stop();
       _result.elapsed = stopwatch.elapsedMilliseconds / 1000.0;
@@ -129,19 +116,18 @@ class DownloadService extends ChangeNotifier {
     return _result;
   }
 
-  Future<_AlbumDownloadResult> _downloadImages(
+  Future<_AlbumDownloadResult> _downloadAlbum(
     List<String> urls,
     String folder,
     AlbumProgress album,
     DownloadConfig config,
-    NetworkService networkService,
+    NetworkService network,
   ) async {
     int downloaded = 0;
     int failed = 0;
     int totalBytes = 0;
     final seenNames = <String, int>{};
-
-    final semaphore = _Semaphore(config.maxWorkers);
+    final sem = _Semaphore(config.maxWorkers);
     final futures = <Future>[];
 
     for (int idx = 0; idx < urls.length; idx++) {
@@ -150,81 +136,67 @@ class DownloadService extends ChangeNotifier {
       final url = urls[idx];
       final path = _uniquePath(idx, url, folder, seenNames);
 
-      await semaphore.acquire();
-      final future = networkService
-          .downloadImage(url, path,
-              saveFormat: config.saveFormat, quality: config.imageQuality)
-          .then((bytes) {
-        downloaded++;
-        totalBytes += bytes;
-        album.downloaded = downloaded;
-        album.failed = failed;
-        notifyListeners();
-      }).catchError((e) {
-        failed++;
-        album.downloaded = downloaded;
-        album.failed = failed;
-        notifyListeners();
-      }).whenComplete(() => semaphore.release());
-
-      futures.add(future);
+      await sem.acquire();
+      futures.add(
+        network
+            .downloadImage(url, path,
+                saveFormat: config.saveFormat, quality: config.imageQuality)
+            .then((bytes) {
+          downloaded++;
+          totalBytes += bytes;
+          album.downloaded = downloaded;
+          album.failed = failed;
+          notifyListeners();
+        }).catchError((_) {
+          failed++;
+          album.downloaded = downloaded;
+          album.failed = failed;
+          notifyListeners();
+        }).whenComplete(() => sem.release()),
+      );
     }
 
     await Future.wait(futures);
     return _AlbumDownloadResult(downloaded, failed, totalBytes);
   }
 
-  String _uniquePath(
-    int idx,
-    String url,
-    String folder,
-    Map<String, int> seenNames,
-  ) {
+  String _uniquePath(int idx, String url, String folder, Map<String, int> seen) {
     final uri = Uri.parse(url);
     var name = p.basename(uri.path);
-    if (name.isEmpty || name == '/') {
-      name = 'image_$idx.jpg';
-    }
+    if (name.isEmpty || name == '/') name = 'image_$idx.jpg';
 
-    if (seenNames.containsKey(name)) {
-      seenNames[name] = seenNames[name]! + 1;
+    if (seen.containsKey(name)) {
+      seen[name] = seen[name]! + 1;
       final ext = p.extension(name);
       final base = p.basenameWithoutExtension(name);
-      name = '${base}_${seenNames[name]}$ext';
+      name = '${base}_${seen[name]}$ext';
     } else {
-      seenNames[name] = 0;
+      seen[name] = 0;
     }
-
     return p.join(folder, name);
   }
 
   String _buildSummary() {
     final r = _result;
-    final buffer = StringBuffer('--- 下载完成 ---\n');
-    buffer.writeln(
-        '成功: ${r.success} | 失败: ${r.failed} | 跳过: ${r.skipped}');
-    buffer.writeln(
-        '图片: ${r.totalImages} 张 | 大小: ${_formatSize(r.totalBytes)}');
-    buffer.writeln('耗时: ${_formatTime(r.elapsed)}');
-    return buffer.toString();
+    return '--- 下载完成 ---\n'
+        '成功: ${r.success} | 失败: ${r.failed} | 跳过: ${r.skipped}\n'
+        '图片: ${r.totalImages} 张 | 大小: ${_fmtSize(r.totalBytes)}\n'
+        '耗时: ${_fmtTime(r.elapsed)}';
   }
 
-  static String _formatSize(int bytes) {
-    if (bytes < 1024) return '${bytes}B';
-    if (bytes < 1024 * 1024) {
-      return '${(bytes / 1024).toStringAsFixed(1)}KB';
-    }
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+  static String _fmtSize(int b) {
+    if (b < 1024) return '${b}B';
+    if (b < 1048576) return '${(b / 1024).toStringAsFixed(1)}KB';
+    return '${(b / 1048576).toStringAsFixed(1)}MB';
   }
 
-  static String _formatTime(double seconds) {
-    if (seconds < 60) return '${seconds.toStringAsFixed(0)}秒';
-    final m = (seconds / 60).floor();
-    final s = (seconds % 60).floor();
-    if (m < 60) return '${m}分${s}秒';
+  static String _fmtTime(double s) {
+    if (s < 60) return '${s.toStringAsFixed(0)}秒';
+    final m = (s / 60).floor();
+    final sec = (s % 60).floor();
+    if (m < 60) return '${m}分${sec}秒';
     final h = (m / 60).floor();
-    final rm = m % 60;
-    return '${h}时${rm}分${s}秒';
+    return '${h}时${m % 60}分${sec}秒';
   }
 }
 
@@ -247,9 +219,9 @@ class _Semaphore {
       _count++;
       return;
     }
-    final completer = Completer<void>();
-    _waitQueue.add(completer);
-    await completer.future;
+    final c = Completer<void>();
+    _waitQueue.add(c);
+    await c.future;
     _count++;
   }
 
@@ -257,9 +229,7 @@ class _Semaphore {
     _count--;
     if (_waitQueue.isNotEmpty) {
       final next = _waitQueue.removeFirst();
-      if (!next.isCompleted) {
-        next.complete();
-      }
+      if (!next.isCompleted) next.complete();
     }
   }
 }

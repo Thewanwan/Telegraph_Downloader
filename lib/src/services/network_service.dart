@@ -18,30 +18,22 @@ class NetworkService {
         final response = await _client
             .get(Uri.parse(url))
             .timeout(Duration(seconds: config.requestTimeout));
-        if (response.statusCode == 200) {
-          return response.body;
-        }
+        if (response.statusCode == 200) return response.body;
         if (response.statusCode == 429 || response.statusCode >= 500) {
           retries++;
-          if (retries > config.maxRetries) {
-            throw HttpException('HTTP ${response.statusCode}');
-          }
-          await Future.delayed(Duration(
-              milliseconds:
-                  (config.retryBackoff * 1000 * retries).toInt()));
+          if (retries > config.maxRetries) break;
+          await _backoff(retries);
           continue;
         }
         throw HttpException('HTTP ${response.statusCode}');
       } on TimeoutException {
         retries++;
         if (retries > config.maxRetries) rethrow;
-        await Future.delayed(Duration(
-            milliseconds: (config.retryBackoff * 1000 * retries).toInt()));
+        await _backoff(retries);
       } on SocketException {
         retries++;
         if (retries > config.maxRetries) rethrow;
-        await Future.delayed(Duration(
-            milliseconds: (config.retryBackoff * 1000 * retries).toInt()));
+        await _backoff(retries);
       }
     }
     throw Exception('Max retries exceeded');
@@ -74,36 +66,36 @@ class NetworkService {
         }
         if (response.statusCode == 429 || response.statusCode >= 500) {
           retries++;
-          if (retries > config.maxRetries) {
-            throw HttpException('HTTP ${response.statusCode}');
-          }
-          await Future.delayed(Duration(
-              milliseconds:
-                  (config.retryBackoff * 1000 * retries).toInt()));
+          if (retries > config.maxRetries) break;
+          _cleanup(file);
+          await _backoff(retries);
           continue;
         }
         throw HttpException('HTTP ${response.statusCode}');
       } on TimeoutException {
-        if (file.existsSync()) file.deleteSync();
+        _cleanup(file);
         retries++;
         if (retries > config.maxRetries) rethrow;
-        await Future.delayed(Duration(
-            milliseconds: (config.retryBackoff * 1000 * retries).toInt()));
+        await _backoff(retries);
       } on SocketException {
-        if (file.existsSync()) file.deleteSync();
+        _cleanup(file);
         retries++;
         if (retries > config.maxRetries) rethrow;
-        await Future.delayed(Duration(
-            milliseconds: (config.retryBackoff * 1000 * retries).toInt()));
+        await _backoff(retries);
       } on HttpException {
-        if (file.existsSync()) file.deleteSync();
+        _cleanup(file);
         rethrow;
       }
     }
     throw Exception('Max retries exceeded');
   }
 
-  void close() {
-    _client.close();
+  void _backoff(int retry) =>
+      Future.delayed(Duration(milliseconds: (config.retryBackoff * 1000 * retry).toInt()));
+
+  void _cleanup(File file) {
+    if (file.existsSync()) file.deleteSync();
   }
+
+  void close() => _client.close();
 }

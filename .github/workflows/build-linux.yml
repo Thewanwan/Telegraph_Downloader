@@ -23,11 +23,11 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.24.5'
           channel: 'stable'
 
       - name: Generate Linux project
-        run: flutter create --project-name telegraph_downloader --platforms=linux .
+        run: flutter create --project-name telegraph_downloader --org com.telegraph --platforms=linux --overwrite .
 
       - name: Install Flutter dependencies
         run: flutter pub get
@@ -37,14 +37,10 @@ jobs:
 
       - name: Create DEB
         run: |
-          mkdir -p pkg/DEBIAN
-          mkdir -p pkg/usr/bin
-          mkdir -p pkg/usr/share/applications
-
+          mkdir -p pkg/DEBIAN pkg/usr/bin pkg/usr/share/applications
           cp build/linux/x64/release/bundle/telegraph_downloader pkg/usr/bin/
-          cp linux/telegraph-downloader.desktop pkg/usr/share/applications/
-
-          cat > pkg/DEBIAN/control << EOF
+          cp linux/telegraph_downloader.desktop pkg/usr/share/applications/ 2>/dev/null || true
+          cat > pkg/DEBIAN/control << 'EOF'
           Package: telegraph-downloader
           Version: 1.0.0
           Architecture: amd64
@@ -52,32 +48,17 @@ jobs:
           Maintainer: Thewanwan
           Description: Telegraph image album downloader
           EOF
-
           dpkg-deb --build pkg build/telegraph-downloader_1.0.0_amd64.deb
-
-      - name: Create AppImage
-        run: |
-          mkdir -p AppDir/usr/bin AppDir/usr/share/applications
-          cp build/linux/x64/release/bundle/telegraph_downloader AppDir/usr/bin/
-          cp linux/telegraph-downloader.desktop AppDir/
-
-          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
-          chmod +x appimagetool
-          ./appimagetool AppDir build/TelegraphDownloader-x86_64.AppImage
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: telegraph-downloader-linux
-          path: |
-            build/telegraph-downloader_1.0.0_amd64.deb
-            build/TelegraphDownloader-x86_64.AppImage
+          path: build/telegraph-downloader_1.0.0_amd64.deb
 
       - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            build/telegraph-downloader_1.0.0_amd64.deb
-            build/TelegraphDownloader-x86_64.AppImage
+          files: build/telegraph-downloader_1.0.0_amd64.deb
           generate_release_notes: true

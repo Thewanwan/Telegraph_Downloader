@@ -16,11 +16,11 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.24.5'
           channel: 'stable'
 
       - name: Generate macOS project
-        run: flutter create --project-name telegraph_downloader --platforms=macos .
+        run: flutter create --project-name telegraph_downloader --org com.telegraph --platforms=macos --overwrite .
 
       - name: Install dependencies
         run: flutter pub get
