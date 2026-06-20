@@ -1,4 +1,4 @@
-name: Build Linux DEB/AppImage
+name: Build Linux DEB
 
 on:
   push:
@@ -6,6 +6,9 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+
+permissions:
+  contents: write
 
 jobs:
   build-linux:
@@ -39,7 +42,6 @@ jobs:
         run: |
           mkdir -p pkg/DEBIAN pkg/usr/bin pkg/usr/share/applications
           cp build/linux/x64/release/bundle/telegraph_downloader pkg/usr/bin/
-          cp linux/telegraph_downloader.desktop pkg/usr/share/applications/ 2>/dev/null || true
           cat > pkg/DEBIAN/control << 'EOF'
           Package: telegraph-downloader
           Version: 1.0.0
@@ -50,7 +52,7 @@ jobs:
           EOF
           dpkg-deb --build pkg build/telegraph-downloader_1.0.0_amd64.deb
 
-      - name: Upload artifacts
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: telegraph-downloader-linux

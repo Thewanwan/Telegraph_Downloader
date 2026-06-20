@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   build-ios:
     runs-on: macos-latest
@@ -25,8 +28,8 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build iOS (simulator, profile mode)
-        run: flutter build ios --profile --simulator
+      - name: Build iOS (debug for simulator)
+        run: flutter build ios --debug --simulator
 
       - name: Create ZIP
         run: |
