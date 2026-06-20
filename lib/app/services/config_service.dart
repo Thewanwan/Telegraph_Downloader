@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/download_config.dart';
 
@@ -45,6 +47,22 @@ class ConfigService extends ChangeNotifier {
     if (historyJson != null) {
       _history = List<Map<String, dynamic>>.from(jsonDecode(historyJson));
     }
+  }
+
+  Future<String> getEffectiveSavePath() async {
+    if (_savePath.isNotEmpty && await Directory(_savePath).exists()) {
+      return _savePath;
+    }
+    if (Platform.isAndroid || Platform.isIOS) {
+      final dir = await getApplicationDocumentsDirectory();
+      final telegraphDir = Directory('${dir.path}/TelegraphDownloader');
+      await telegraphDir.create(recursive: true);
+      return telegraphDir.path;
+    }
+    final dir = await getDownloadsDirectory();
+    if (dir != null) return dir.path;
+    final appDir = await getApplicationDocumentsDirectory();
+    return appDir.path;
   }
 
   void setThemeMode(ThemeMode mode) {

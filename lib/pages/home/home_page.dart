@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
 import '../../app/services/download_service.dart';
 import '../../app/services/config_service.dart';
 import '../../widgets/url_input_card.dart';
@@ -19,6 +18,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final _urlController = TextEditingController();
   final _scrollController = ScrollController();
+  final _logLines = <String>[];
 
   @override
   void dispose() {
@@ -50,15 +50,17 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    String savePath = config.savePath;
-    if (savePath.isEmpty) {
-      final result = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: '选择保存路径',
-      );
-      if (result == null) return;
-      savePath = result;
-      config.setSavePath(savePath);
-    }
+    final savePath = await config.getEffectiveSavePath();
+
+    _logLines.clear();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('保存到: $savePath'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
 
     final result = await downloadService.downloadAll(
       urls,
@@ -77,6 +79,14 @@ class _HomePageState extends State<HomePage> {
         'bytes': result.totalBytes,
         'elapsed': result.elapsed,
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '下载完成: ${result.success} 个图册, ${result.totalImages} 张图片',
+          ),
+        ),
+      );
     }
   }
 

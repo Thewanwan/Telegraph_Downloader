@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
 import '../../app/services/config_service.dart';
 
 class SettingsSheet extends StatelessWidget {
@@ -28,44 +27,43 @@ class SettingsSheet extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .outline
-                        .withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              Text('下载设置',
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text('下载设置', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 16),
 
-              Text('保存路径',
-                  style: Theme.of(context).textTheme.titleSmall),
+              Text('保存路径', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      config.savePath.isEmpty ? '未设置' : config.savePath,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () async {
-                      final result =
-                          await FilePicker.platform.getDirectoryPath(
-                        dialogTitle: '选择保存路径',
-                      );
-                      if (result != null) {
-                        config.setSavePath(result);
-                      }
-                    },
-                    icon: const Icon(Icons.folder_open),
-                    label: const Text('浏览'),
-                  ),
-                ],
+              FutureBuilder<String>(
+                future: config.getEffectiveSavePath(),
+                builder: (ctx, snap) {
+                  final path = snap.data ?? '加载中...';
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          path,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final result = await config.getEffectiveSavePath();
+                          if (!ctx.mounted) return;
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(content: Text('保存路径: $result')),
+                          );
+                        },
+                        icon: const Icon(Icons.folder_open),
+                        label: const Text('查看'),
+                      ),
+                    ],
+                  );
+                },
               ),
               const Divider(),
 
@@ -74,10 +72,9 @@ class SettingsSheet extends StatelessWidget {
                 label: '线程数',
                 value: dc.maxWorkers,
                 items: [2, 4, 8, 12, 16, 20],
+                labels: null,
                 onChanged: (v) {
-                  if (v != null) {
-                    config.setDownloadConfig(dc.copyWith(maxWorkers: v));
-                  }
+                  if (v != null) config.setDownloadConfig(dc.copyWith(maxWorkers: v));
                 },
               ),
 
@@ -86,11 +83,9 @@ class SettingsSheet extends StatelessWidget {
                 label: '请求超时（秒）',
                 value: dc.requestTimeout,
                 items: [5, 10, 15, 30, 60],
+                labels: null,
                 onChanged: (v) {
-                  if (v != null) {
-                    config
-                        .setDownloadConfig(dc.copyWith(requestTimeout: v));
-                  }
+                  if (v != null) config.setDownloadConfig(dc.copyWith(requestTimeout: v));
                 },
               ),
 
@@ -99,11 +94,9 @@ class SettingsSheet extends StatelessWidget {
                 label: '保存格式',
                 value: dc.saveFormat,
                 items: ['original', 'JPG', 'PNG', 'WebP', 'BMP'],
-                labels: ['保持原样', 'JPG', 'PNG', 'WebP', 'BMP'],
+                labels: const ['保持原样', 'JPG', 'PNG', 'WebP', 'BMP'],
                 onChanged: (v) {
-                  if (v != null) {
-                    config.setDownloadConfig(dc.copyWith(saveFormat: v));
-                  }
+                  if (v != null) config.setDownloadConfig(dc.copyWith(saveFormat: v));
                 },
               ),
 
@@ -116,8 +109,7 @@ class SettingsSheet extends StatelessWidget {
                   max: 100,
                   divisions: 9,
                   onChanged: (v) {
-                    config.setDownloadConfig(
-                        dc.copyWith(imageQuality: v.toInt()));
+                    config.setDownloadConfig(dc.copyWith(imageQuality: v.toInt()));
                   },
                 ),
 
@@ -125,11 +117,10 @@ class SettingsSheet extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 8),
 
-              Text('关于',
-                  style: Theme.of(context).textTheme.titleSmall),
+              Text('关于', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Text(
-                'Telegraph Downloader v1.0.1\n'
+                'Telegraph Downloader v1.0.2\n'
                 '跨平台 Telegraph 图册批量下载工具\n'
                 '支持 Android / iOS / macOS / Windows / Linux',
                 style: Theme.of(context).textTheme.bodySmall,
@@ -184,15 +175,8 @@ class SettingsSheet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label: ${value.toInt()}',
-              style: Theme.of(context).textTheme.bodyMedium),
-          Slider(
-            value: value,
-            min: min,
-            max: max,
-            divisions: divisions,
-            onChanged: onChanged,
-          ),
+          Text('$label: ${value.toInt()}', style: Theme.of(context).textTheme.bodyMedium),
+          Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged),
         ],
       ),
     );

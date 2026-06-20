@@ -27,9 +27,7 @@ class HistoryDialog extends StatelessWidget {
                   return ListTile(
                     leading: const Icon(Icons.download_done),
                     title: Text('${entry['success'] ?? 0} 个图册'),
-                    subtitle: Text(
-                      '$timeStr | ${(entry['images'] ?? 0)} 张图片',
-                    ),
+                    subtitle: Text('$timeStr | ${(entry['images'] ?? 0)} 张图片'),
                     dense: true,
                   );
                 },

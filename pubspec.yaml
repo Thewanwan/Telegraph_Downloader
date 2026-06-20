@@ -1,7 +1,7 @@
 name: telegraph_downloader
-description: Telegraph 图册批量下载工具 - 支持 Android/iOS/macOS/Windows/Linux
+description: Telegraph 图册批量下载工具
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -11,11 +11,10 @@ dependencies:
     sdk: flutter
   http: ^1.2.0
   path: ^1.9.0
+  path_provider: ^2.1.0
   html: ^0.15.4
   shared_preferences: ^2.2.0
-  file_picker: ^6.1.0
   provider: ^6.1.0
-  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -24,6 +23,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/
-    - assets/icons/

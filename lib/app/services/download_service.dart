@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -86,7 +85,8 @@ class DownloadService extends ChangeNotifier {
           _log('  📁 $title (${imageUrls.length} 张图片)');
           notifyListeners();
 
-          final folder = p.join(basePath, title);
+          final safeTitle = title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
+          final folder = p.join(basePath, safeTitle);
           await Directory(folder).create(recursive: true);
 
           final ar = await _downloadAlbum(
@@ -129,7 +129,7 @@ class DownloadService extends ChangeNotifier {
     int failed = 0;
     int totalBytes = 0;
     final seenNames = <String, int>{};
-    final sem = _Semaphore(config.maxWorkers);
+    final semaphore = _Semaphore(config.maxWorkers);
     final futures = <Future>[];
 
     for (int idx = 0; idx < urls.length; idx++) {
@@ -138,7 +138,7 @@ class DownloadService extends ChangeNotifier {
       final url = urls[idx];
       final path = _uniquePath(idx, url, folder, seenNames);
 
-      await sem.acquire();
+      await semaphore.acquire();
       futures.add(
         network
             .downloadImage(url, path,
@@ -154,7 +154,7 @@ class DownloadService extends ChangeNotifier {
           album.downloaded = downloaded;
           album.failed = failed;
           notifyListeners();
-        }).whenComplete(() => sem.release()),
+        }).whenComplete(() => semaphore.release()),
       );
     }
 
@@ -213,7 +213,7 @@ class _AlbumDownloadResult {
 class _Semaphore {
   int _count;
   final int _max;
-  final Queue<Completer<void>> _waitQueue = Queue<Completer<void>>();
+  final List<Completer<void>> _waitQueue = [];
 
   _Semaphore(this._max) : _count = 0;
 
@@ -231,7 +231,7 @@ class _Semaphore {
   void release() {
     _count--;
     if (_waitQueue.isNotEmpty) {
-      final next = _waitQueue.removeFirst();
+      final next = _waitQueue.removeAt(0);
       if (!next.isCompleted) next.complete();
     }
   }

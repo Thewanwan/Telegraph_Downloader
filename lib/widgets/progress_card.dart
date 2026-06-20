@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../app/models/album_progress.dart';
 
 class ProgressCard extends StatelessWidget {
