@@ -90,7 +90,7 @@ class NetworkService {
     throw Exception('超过最大重试次数');
   }
 
-  void _backoff(int retry) => Future.delayed(
+  Future<void> _backoff(int retry) => Future.delayed(
       Duration(milliseconds: (config.retryBackoff * 1000 * retry).toInt()));
 
   void _cleanup(File file) {
