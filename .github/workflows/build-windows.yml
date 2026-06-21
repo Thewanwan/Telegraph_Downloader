@@ -14,8 +14,6 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
-    env:
-      CMAKE_GENERATOR: "Visual Studio 18 2025"
     steps:
       - uses: actions/checkout@v4
 
@@ -50,8 +48,28 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Patch CMake generator
+        shell: pwsh
+        run: |
+          $cmakePath = "windows\CMakeLists.txt"
+          if (Test-Path $cmakePath) {
+            $content = Get-Content $cmakePath -Raw
+            Write-Output "=== Before ==="
+            Write-Output $content.Substring(0, [Math]::Min(500, $content.Length))
+          }
+          
+          $flutterCmake = "windows\flutter\CMakeLists.txt"
+          if (Test-Path $flutterCmake) {
+            $content = Get-Content $flutterCmake -Raw
+            Write-Output "=== Flutter CMake ==="
+            Write-Output $content.Substring(0, [Math]::Min(1000, $content.Length))
+          }
+
       - name: Build Windows
-        run: flutter build windows --release
+        shell: pwsh
+        run: |
+          $env:CMAKE_GENERATOR = "Visual Studio 18 2025"
+          flutter build windows --release
 
       - name: Rename EXE
         shell: pwsh
