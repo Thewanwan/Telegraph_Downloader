@@ -31,20 +31,46 @@ jobs:
       - name: Patch CMake for VS 2022
         shell: pwsh
         run: |
-          $files = Get-ChildItem -Path windows -Recurse -Filter "CMakeLists.txt"
-          foreach ($f in $files) {
-            $content = Get-Content $f.FullName -Raw
-            if ($content -match "Visual Studio 16 2019") {
-              $content = $content -replace "Visual Studio 16 2019", "Visual Studio 17 2022"
-              Set-Content $f.FullName $content
-              Write-Output "Patched: $($f.FullName)"
+          # Patch all CMakeLists.txt files
+          Get-ChildItem -Path windows -Recurse -Filter "CMakeLists.txt" | ForEach-Object {
+            $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
+            if ($content) {
+              $new = $content -replace "Visual Studio 16 2019", "Visual Studio 17 2022"
+              if ($new -ne $content) {
+                Set-Content $_.FullName $new
+                Write-Output "Patched: $($_.FullName)"
+              }
             }
           }
+          # Patch CMakePresets.json if it exists
+          Get-ChildItem -Path windows -Recurse -Filter "CMakePresets.json" | ForEach-Object {
+            $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
+            if ($content) {
+              $new = $content -replace "Visual Studio 16 2019", "Visual Studio 17 2022"
+              if ($new -ne $content) {
+                Set-Content $_.FullName $new
+                Write-Output "Patched preset: $($_.FullName)"
+              }
+            }
+          }
+          # Check if flutter sets generator via env or cmake args
+          Get-ChildItem -Path windows -Recurse -Filter "*.cmake" | ForEach-Object {
+            $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
+            if ($content -and $content -match "Visual Studio 16") {
+              $new = $content -replace "Visual Studio 16 2019", "Visual Studio 17 2022"
+              Set-Content $_.FullName $new
+              Write-Output "Patched cmake: $($_.FullName)"
+            }
+          }
+          # List all files for debugging
+          Get-ChildItem -Path windows -Recurse | Select-Object FullName
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build Windows
+        env:
+          CMAKE_GENERATOR: "Visual Studio 17 2022"
         run: flutter build windows --release
 
       - name: Upload
