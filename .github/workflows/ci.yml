@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   analyze:
@@ -18,7 +19,7 @@ jobs:
           flutter-version: '3.24.5'
           channel: 'stable'
 
-      - name: Generate Linux platform (for analysis)
+      - name: Generate Linux platform
         run: |
           flutter create --project-name telegraph_downloader --org com.telegraph --platforms=linux /tmp/flutter_temp
           cp -r /tmp/flutter_temp/linux linux

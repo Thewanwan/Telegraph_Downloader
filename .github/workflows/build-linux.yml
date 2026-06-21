@@ -6,6 +6,7 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -46,23 +47,23 @@ jobs:
           cp build/linux/x64/release/bundle/telegraph_downloader pkg/usr/bin/
           cat > pkg/DEBIAN/control << 'EOF'
           Package: telegraph-downloader
-          Version: 1.0.1
+          Version: 1.0.2
           Architecture: amd64
           Depends: libgtk-3-0
           Maintainer: Thewanwan
           Description: Telegraph image album downloader
           EOF
-          dpkg-deb --build pkg build/telegraph-downloader_1.0.1_amd64.deb
+          dpkg-deb --build pkg build/telegraph-downloader_1.0.2_amd64.deb
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: telegraph-downloader-linux
-          path: build/telegraph-downloader_1.0.1_amd64.deb
+          path: build/telegraph-downloader_1.0.2_amd64.deb
 
       - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: build/telegraph-downloader_1.0.1_amd64.deb
+          files: build/telegraph-downloader_1.0.2_amd64.deb

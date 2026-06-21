@@ -6,6 +6,7 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -37,7 +38,7 @@ jobs:
         run: |
           SIM_DIR=$(find build -path "*/Runner.app" -type d | head -1)
           if [ -z "$SIM_DIR" ]; then
-            echo "Runner.app not found, listing build contents:"
+            echo "Runner.app not found:"
             find build -type d | head -30
             exit 1
           fi

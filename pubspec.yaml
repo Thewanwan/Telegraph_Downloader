@@ -1,3 +1,11 @@
+name: telegraph_downloader
+description: Telegraph 图册批量下载工具
+publish_to: 'none'
+version: 1.0.2+3
+
+environment:
+  sdk: ^3.5.0
+
 dependencies:
   flutter:
     sdk: flutter
@@ -8,3 +16,11 @@ dependencies:
   shared_preferences: ^2.2.0
   provider: ^6.1.0
   file_picker: ^6.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
