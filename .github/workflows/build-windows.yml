@@ -17,71 +17,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Visual Studio Build Tools
+        uses: microsoft/setup-msbuild@v2
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
           channel: 'stable'
 
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          vsversion: '2022'
+
       - name: Generate Windows platform
         run: |
           flutter create --project-name telegraph_downloader --org com.telegraph --platforms=windows C:\temp\flutter_temp
           xcopy C:\temp\flutter_temp\windows windows /E /I /Y
 
-      - name: Patch CMake for VS 2022
-        shell: pwsh
+      - name: Get version
+        id: version
+        shell: bash
         run: |
-          # Patch all CMakeLists.txt files
-          Get-ChildItem -Path windows -Recurse -Filter "CMakeLists.txt" | ForEach-Object {
-            $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
-            if ($content) {
-              $new = $content -replace "Visual Studio 16 2019", "Visual Studio 17 2022"
-              if ($new -ne $content) {
-                Set-Content $_.FullName $new
-                Write-Output "Patched: $($_.FullName)"
-              }
-            }
-          }
-          # Patch CMakePresets.json if it exists
-          Get-ChildItem -Path windows -Recurse -Filter "CMakePresets.json" | ForEach-Object {
-            $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
-            if ($content) {
-              $new = $content -replace "Visual Studio 16 2019", "Visual Studio 17 2022"
-              if ($new -ne $content) {
-                Set-Content $_.FullName $new
-                Write-Output "Patched preset: $($_.FullName)"
-              }
-            }
-          }
-          # Check if flutter sets generator via env or cmake args
-          Get-ChildItem -Path windows -Recurse -Filter "*.cmake" | ForEach-Object {
-            $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
-            if ($content -and $content -match "Visual Studio 16") {
-              $new = $content -replace "Visual Studio 16 2019", "Visual Studio 17 2022"
-              Set-Content $_.FullName $new
-              Write-Output "Patched cmake: $($_.FullName)"
-            }
-          }
-          # List all files for debugging
-          Get-ChildItem -Path windows -Recurse | Select-Object FullName
+          VERSION=$(grep 'version:' pubspec.yaml | head -1 | awk '{print $2}' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build Windows
-        env:
-          CMAKE_GENERATOR: "Visual Studio 17 2022"
         run: flutter build windows --release
+
+      - name: Rename EXE
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          cp build/windows/x64/runner/Release/telegraph_downloader.exe "build/TelegraphDownloader_v${VERSION}.exe"
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: telegraph-downloader-windows
-          path: build/windows/x64/runner/Release/
+          path: build/TelegraphDownloader_v*.exe
 
       - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: build/windows/x64/runner/Release/telegraph_downloader.exe
+          files: build/TelegraphDownloader_v*.exe
