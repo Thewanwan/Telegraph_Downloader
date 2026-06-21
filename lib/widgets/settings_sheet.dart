@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../app/services/config_service.dart';
+import '../../app/services/update_service.dart';
 
 class SettingsSheet extends StatelessWidget {
   const SettingsSheet({super.key});
@@ -174,10 +175,37 @@ class SettingsSheet extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Text(
-                'Telegraph Downloader v1.0.2\n'
+                'Telegraph Downloader v1.0.3\n'
                 '跨平台 Telegraph 图册批量下载工具\n'
                 '支持 Android / iOS / macOS / Windows / Linux',
                 style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('正在检查更新...'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    final info =
+                        await UpdateService.checkForUpdate('1.0.3');
+                    if (!context.mounted) return;
+                    if (info != null) {
+                      UpdateService.showUpdateDialog(context, info);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('当前已是最新版本')),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.system_update),
+                  label: const Text('检查更新'),
+                ),
               ),
             ],
           ),
