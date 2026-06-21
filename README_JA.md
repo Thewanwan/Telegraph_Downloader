@@ -1,85 +1,91 @@
-# Telegraph 画像ダウンローダー
+# Telegraph Downloader
 
-Flutter で構築されたクロスプラットフォームのデスクトップ＆モバイルツールで、`telegra.ph` に公開された画像アルバムを一括ダウンロードします。
+[中文](README.md) | [English](README_EN.md) | [한국어](README_KO.md)
 
-![](images.png)
-
-## 対応プラットフォーム
-
-| プラットフォーム | 形式 | ステータス |
-|------------------|------|------------|
-| Android | APK | ✅ GitHub Actions で自動ビルド |
-| iOS | IPA | ✅ GitHub Actions で自動ビルド |
-| macOS | DMG | ✅ GitHub Actions で自動ビルド |
-| Windows | EXE | ✅ GitHub Actions で自動ビルド |
-| Linux | DEB / AppImage | ✅ GitHub Actions で自動ビルド |
+`telegra.ph` に公開されている画像アルバムをバッチダウンロードするためのクロスプラットフォームツール。Android、iOS、macOS、Windows、Linux をサポートし、アプリ内自動更新機能を搭載。
 
 ## 機能
 
-- **マルチスレッド一括ダウンロード** — 複数リンクの同時ダウンロード対応、スレッド数のカスタマイズ (2〜20)
-- **フォーマット変換** — オリジナル、JPG、PNG、WebP、BMP 形式でエクスポート対応
-- **ダーク/ライトテーマ** — ワンクリック切り替え、設定の自動記憶
-- **ダウンロード履歴** — 最近の100件のダウンロード記録を自動保存
-- **リアルタイム進捗** — 各アルバムのダウンロード状況と進捗を表示
-- **自動リトライ** — ネットワーク不安定時のリトライ機構を内蔵
-- **設定の永続化** — 全設定を自動保存し、次回起動時に自動復元
+- **マルチスレッドバッチダウンロード** — 複数URL入力、2〜20並列スレッド設定
+- **リアルタイム進捗追跡** — アルバムごとのプログレスバー、ダウンロード/失敗/完了ステータス表示
+- **ダウンロードログ** — ターミナル風ログパネル、自動スクロール
+- **ダーク/ライトテーマ** — ワンクリック切替、設定自動保存
+- **ダウンロード履歴** — 直近30件保存、ワンクリック再ダウンロード
+- **カスタム保存パス** — フォルダ選択器で自由に設定
+- **自動リトライ** — 指数バックオフによる自動リトライ
+- **アプリ内更新** — GitHub Releasesの新バージョンを自動検出、ワンクリックダウンロード＆インストール
+- **クリップボード検出** — ブラウザからリンクコピー後、アプリ起動時に自動ペースト提案
+- **設定永続化** — 全設定を自動保存、次回起動時に自動復元
+
+## サポートプラットフォーム
+
+| プラットフォーム | 形式 | CI/CD | ステータス |
+|------------------|------|-------|------------|
+| Android | APK | GitHub Actions | ✅ 完了 |
+| iOS | IPA | GitHub Actions | ✅ 完了 |
+| macOS | DMG | GitHub Actions | ✅ 完了 |
+| Windows | EXE | GitHub Actions | ✅ 完了 |
+| Linux | DEB | GitHub Actions | ✅ 完了 |
+
+## ダウンロード
+
+[Releases](https://github.com/Thewanwan/Telegraph_Downloader) からダウンロード。
+
+### Android
+`telegraph_x.x.x.apk` をダウンロード。「不明なソース」の許可が必要です。
+
+### Windows
+`telegraph_downloader.exe` をダウンロード、ダブルクリックで実行。
+
+### macOS
+`.dmg` をダウンロード、Applications にドラッグ。初回起動は「システム設定 → プライバシーとセキュリティ」で許可が必要です。
+
+### Linux
+```bash
+sudo dpkg -i telegraph-downloader_x.x.x_amd64.deb
+```
 
 ## 使い方
 
-### ソースから実行
+### 基本フロー
+1. `telegra.ph` のリンクを入力欄に貼り付け（1行に1リンク）
+2. 「ダウンロード開始」をタップ
+3. 完了を待つ — 画像は指定ディレクトリに保存
 
+### クイック操作
+- **クリップボード検出**: ブラウザからtelegra.phリンクをコピーしてアプリを開くと、自動提案
+- **再ダウンロード**: 履歴のダウンロードアイコンをタップ — リンクが自動入力
+- **キャンセル**: ダウンロード中に「キャンセル」をタップ
+
+### 設定オプション
+| オプション | 説明 | デフォルト |
+|-----------|------|-----------|
+| 保存パス | 画像保存先 | 外部ストレージ/Downloads/TelegraphDownloader |
+| スレッド数 | 並列ダウンロード数 | 8 |
+| タイムアウト | リクエストタイムアウト | 15秒 |
+| 保存形式 | 画像エクスポート形式 | オリジナル |
+| 品質 | JPG/WebP圧縮品質 | 95 |
+
+## ソースからビルド
+
+### 必要要件
+- Flutter SDK 3.24+
+- Dart SDK 3.5+
+
+### セットアップ
 ```bash
-# Flutter SDK インストール: https://docs.flutter.dev/get-started/install
+git clone https://github.com/Thewanwan/Telegraph_Downloader.git
+cd Telegraph_Downloader
 flutter pub get
 flutter run
 ```
 
-### リリース版をダウンロード
-
-[Releases](https://github.com/Thewanwan/Telegraph_Downloader) ページからプラットフォーム対応のインストーラーをダウンロードしてください。
-
-## 開発
-
-### プロジェクト構造
-
-```
-lib/
-├── main.dart                    # エントリポイント
-└── src/
-    ├── models/
-    │   ├── download_config.dart   # ダウンロード設定モデル
-    │   ├── album_progress.dart    # 進捗モデル
-    │   └── download_result.dart   # 結果モデル
-    ├── services/
-    │   ├── network_service.dart   # ネットワークリクエストサービス
-    │   ├── page_parser.dart       # ページパーサーサービス
-    │   ├── config_service.dart    # 設定管理サービス
-    │   └── download_service.dart  # ダウンロード管理サービス
-    ├── screens/
-    │   └── home_screen.dart       # メイン画面
-    ├── widgets/
-    │   ├── url_input_card.dart    # URL 入力コンポーネント
-    │   ├── progress_card.dart     # 進捗表示コンポーネント
-    │   ├── log_card.dart          # ログコンポーネント
-    │   └── settings_sheet.dart    # 設定パネル
-    └── utils/
-        └── formatters.dart        # フォーマットユーティリティ
-.github/workflows/
-├── build-android.yml              # Android ビルド
-├── build-ios.yml                  # iOS ビルド
-├── build-macos.yml                # macOS ビルド
-├── build-windows.yml              # Windows ビルド
-├── build-linux.yml                # Linux ビルド
-└── ci.yml                         # CI パイプライン
-```
-
-### ローカルビルド
-
+### ビルドコマンド
 ```bash
-# Android
-flutter build apk --release --split-per-abi
+# Android（ユニバーサルAPK）
+flutter build apk --release
 
-# iOS (macOS + Xcode が必要)
+# iOS
 flutter build ios --release
 
 # macOS
@@ -92,19 +98,51 @@ flutter build windows --release
 flutter build linux --release
 ```
 
-## キーボードショートカット
+## プロジェクト構造
 
-| ショートカット | 機能 |
-|----------------|------|
-| `Ctrl+V` | リンクを入力欄に貼り付け |
-| `Ctrl+Enter` | ダウンロード開始 |
+```
+lib/
+├── main.dart                          # エントリポイント + バージョンチェック
+├── app/
+│   ├── models/
+│   │   ├── download_config.dart       # 設定（スレッド/タイムアウト/形式）
+│   │   ├── album_progress.dart        # アルバム進捗モデル
+│   │   └── download_result.dart       # ダウンロード結果サマリ
+│   └── services/
+│       ├── config_service.dart        # 設定管理（SharedPreferences）
+│       ├── download_service.dart      # ダウンロードコア（セマフォ）
+│       ├── network_service.dart       # HTTPクライアント（リトライ/タイムアウト）
+│       ├── page_parser.dart           # Telegraphページパーサー
+│       └── update_service.dart        # アプリ内更新（GitHub API）
+├── pages/home/
+│   └── home_page.dart                 # メイン画面
+└── widgets/                           # UIコンポーネント
+```
 
-## ネットワークに関する注意
+## 技術スタック
+
+| 技術 | 用途 |
+|------|------|
+| Flutter 3.24 | クロスプラットフォームUI |
+| Provider | 状態管理 |
+| http | HTTP通信 |
+| html | ページ解析 |
+| path_provider | ファイルパス解決 |
+| shared_preferences | ローカル設定保存 |
+| file_picker | フォルダ選択 |
+| open_file | APKインストーラ起動 |
+
+## ネットワークについて
 
 `telegra.ph` にアクセスするにはプロキシが必要です。
 
-- **モバイル**: プロキシ対応のネットワーク環境をご利用ください
-- **デスクトップ**: グローバルプロキシを有効にするか、`natapp` などの転送ツールをご利用ください
+| プラットフォーム | 解決策 |
+|------------------|--------|
+| Android | VPNまたはプロキシ対応Wi-Fi |
+| iOS | プロキシ対応VPN |
+| Windows | グローバルプロキシまたはnatapp等の転送ツール |
+| macOS | システムプロキシを有効化 |
+| Linux | `http_proxy` 環境変数を設定 |
 
 ## ライセンス
 

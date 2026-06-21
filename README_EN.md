@@ -1,85 +1,91 @@
-# Telegraph Image Downloader
+# Telegraph Downloader
 
-A cross-platform desktop & mobile tool built with Flutter that batch downloads image albums published on `telegra.ph`.
+[中文](README.md) | [日本語](README_JA.md) | [한국어](README_KO.md)
 
-![](images.png)
-
-## Supported Platforms
-
-| Platform | Format | Status |
-|----------|--------|--------|
-| Android | APK | ✅ Auto-built via GitHub Actions |
-| iOS | IPA | ✅ Auto-built via GitHub Actions |
-| macOS | DMG | ✅ Auto-built via GitHub Actions |
-| Windows | EXE | ✅ Auto-built via GitHub Actions |
-| Linux | DEB / AppImage | ✅ Auto-built via GitHub Actions |
+A cross-platform Flutter tool for batch downloading image albums from `telegra.ph`. Supports Android, iOS, macOS, Windows, and Linux with in-app auto-update.
 
 ## Features
 
-- **Multithreaded batch download** — Download multiple links simultaneously, configurable thread count (2~20)
-- **Format conversion** — Export as original format, JPG, PNG, WebP, or BMP
-- **Dark/Light theme** — One-click toggle with auto-remembered preference
-- **Download history** — Automatically saves the last 100 download records
-- **Real-time progress** — View download status and progress for each album
-- **Auto retry** — Built-in retry mechanism for unstable networks
-- **Persistent config** — All settings auto-saved and restored on next launch
+- **Multi-threaded batch download** — Enter multiple URLs, configure 2~20 concurrent threads
+- **Real-time progress tracking** — Per-album progress bars with download/fail/complete status
+- **Download log** — Terminal-style log panel with auto-scrolling
+- **Dark/Light theme** — One-click toggle, preferences auto-saved
+- **Download history** — Saves last 30 records, one-click re-download
+- **Custom save path** — Choose any folder via file picker
+- **Auto retry** — Automatic retry with exponential backoff on network errors
+- **In-app update** — Auto-detect new releases from GitHub, download and install
+- **Clipboard detection** — Auto-prompt to paste telegra.ph links when app resumes
+- **Persistent config** — All settings saved, restored on next launch
+
+## Supported Platforms
+
+| Platform | Format | CI/CD | Status |
+|----------|--------|-------|--------|
+| Android | APK | GitHub Actions | ✅ Done |
+| iOS | IPA | GitHub Actions | ✅ Done |
+| macOS | DMG | GitHub Actions | ✅ Done |
+| Windows | EXE | GitHub Actions | ✅ Done |
+| Linux | DEB | GitHub Actions | ✅ Done |
+
+## Download
+
+Download from [Releases](https://github.com/Thewanwan/Telegraph_Downloader/releases).
+
+### Android
+Download `telegraph_x.x.x.apk`. Allow "Unknown sources" during installation.
+
+### Windows
+Download `telegraph_downloader.exe` and double-click to run.
+
+### macOS
+Download `.dmg`, drag to Applications. First launch: go to System Settings → Privacy & Security to allow.
+
+### Linux
+```bash
+sudo dpkg -i telegraph-downloader_x.x.x_amd64.deb
+```
 
 ## Usage
 
-### Run from source
+### Basic Workflow
+1. Paste `telegra.ph` links in the input field (one per line)
+2. Tap "开始下载" (Start Download)
+3. Wait for completion — images saved to the configured directory
 
+### Quick Actions
+- **Clipboard detection**: Copy a telegra.ph link in browser, open app — auto-prompt to paste
+- **Re-download**: Tap download icon in history — URLs auto-filled into input
+- **Cancel**: Tap "取消" during download to stop
+
+### Settings
+| Option | Description | Default |
+|--------|-------------|---------|
+| Save Path | Image save location | External Storage/Downloads/TelegraphDownloader |
+| Threads | Concurrent download threads | 8 |
+| Timeout | Request timeout (seconds) | 15 |
+| Format | Image export format | Original |
+| Quality | JPG/WebP compression | 95 |
+
+## Build from Source
+
+### Requirements
+- Flutter SDK 3.24+
+- Dart SDK 3.5+
+
+### Setup
 ```bash
-# Install Flutter SDK: https://docs.flutter.dev/get-started/install
+git clone https://github.com/Thewanwan/Telegraph_Downloader.git
+cd Telegraph_Downloader
 flutter pub get
 flutter run
 ```
 
-### Download prebuilt releases
-
-Visit the [Releases](https://github.com/Thewanwan/Telegraph_Downloader/releases) page to download the installer for your platform.
-
-## Development
-
-### Project Structure
-
-```
-lib/
-├── main.dart                    # Entry point
-└── src/
-    ├── models/
-    │   ├── download_config.dart   # Download config model
-    │   ├── album_progress.dart    # Progress model
-    │   └── download_result.dart   # Result model
-    ├── services/
-    │   ├── network_service.dart   # Network request service
-    │   ├── page_parser.dart       # Page parser service
-    │   ├── config_service.dart    # Config management service
-    │   └── download_service.dart  # Download management service
-    ├── screens/
-    │   └── home_screen.dart       # Main screen
-    ├── widgets/
-    │   ├── url_input_card.dart    # URL input component
-    │   ├── progress_card.dart     # Progress display component
-    │   ├── log_card.dart          # Log component
-    │   └── settings_sheet.dart    # Settings panel
-    └── utils/
-        └── formatters.dart        # Formatting utilities
-.github/workflows/
-├── build-android.yml              # Android build
-├── build-ios.yml                  # iOS build
-├── build-macos.yml                # macOS build
-├── build-windows.yml              # Windows build
-├── build-linux.yml                # Linux build
-└── ci.yml                         # CI pipeline
-```
-
-### Local Build
-
+### Build Commands
 ```bash
-# Android
-flutter build apk --release --split-per-abi
+# Android (single universal APK)
+flutter build apk --release
 
-# iOS (requires macOS + Xcode)
+# iOS
 flutter build ios --release
 
 # macOS
@@ -92,19 +98,58 @@ flutter build windows --release
 flutter build linux --release
 ```
 
-## Keyboard Shortcuts
+## Project Structure
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+V` | Paste links into input field |
-| `Ctrl+Enter` | Start download |
+```
+lib/
+├── main.dart                          # Entry point + version check
+├── app/
+│   ├── models/
+│   │   ├── download_config.dart       # Config (threads, timeout, format)
+│   │   ├── album_progress.dart        # Album download progress
+│   │   └── download_result.dart       # Download result summary
+│   └── services/
+│       ├── config_service.dart        # Config management (SharedPreferences)
+│       ├── download_service.dart      # Core download engine (semaphore)
+│       ├── network_service.dart       # HTTP client (retry, timeout)
+│       ├── page_parser.dart           # Telegraph page parser
+│       └── update_service.dart        # In-app update (GitHub API)
+├── pages/home/
+│   └── home_page.dart                 # Main screen
+└── widgets/                           # UI components
+```
+
+## Tech Stack
+
+| Technology | Purpose |
+|------------|---------|
+| Flutter 3.24 | Cross-platform UI |
+| Provider | State management |
+| http | HTTP networking |
+| html | Page parsing |
+| path_provider | File path resolution |
+| shared_preferences | Local config storage |
+| file_picker | Folder picker |
+| open_file | Open APK installer |
 
 ## Network Notes
 
-`telegra.ph` requires a proxy to access in certain regions.
+`telegra.ph` requires a proxy to access in most regions.
 
-- **Mobile**: Use a network environment that supports proxy
-- **Desktop**: Enable global proxy or use tools like `natapp` for traffic forwarding
+| Platform | Solution |
+|----------|----------|
+| Android | Use a VPN or proxy-enabled Wi-Fi |
+| iOS | Use a VPN with proxy support |
+| Windows | Enable global proxy or use tunnel tools like natapp |
+| macOS | Enable system proxy |
+| Linux | Set `http_proxy` environment variable |
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push and create a Pull Request
 
 ## License
 
