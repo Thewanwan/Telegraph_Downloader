@@ -27,7 +27,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.44.2'
           channel: 'stable'
 
       - name: Generate Linux platform
@@ -35,35 +35,100 @@ jobs:
           flutter create --project-name telegraph_downloader --org com.telegraph --platforms=linux /tmp/flutter_temp
           cp -r /tmp/flutter_temp/linux linux
 
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | head -1 | awk '{print $2}' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Install Flutter dependencies
         run: flutter pub get
 
       - name: Build Linux
         run: flutter build linux --release
 
+      - name: Check bundle contents
+        run: |
+          echo "=== Bundle contents ==="
+          ls -la build/linux/x64/release/bundle/
+          echo "=== Bundle lib ==="
+          ls -la build/linux/x64/release/bundle/lib/ 2>/dev/null || echo "No lib dir"
+          echo "=== Bundle data ==="
+          ls -la build/linux/x64/release/bundle/data/ 2>/dev/null || echo "No data dir"
+          echo "=== Total size ==="
+          du -sh build/linux/x64/release/bundle/
+
+      - name: Create ZIP
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          cd build/linux/x64/release/bundle
+          zip -r "$GITHUB_WORKSPACE/build/TelegraphDownloader_v${VERSION}_linux.zip" .
+          echo "ZIP created"
+
       - name: Create DEB
         run: |
-          mkdir -p pkg/DEBIAN pkg/usr/bin pkg/usr/share/applications
-          cp build/linux/x64/release/bundle/telegraph_downloader pkg/usr/bin/
-          cat > pkg/DEBIAN/control << 'EOF'
+          VERSION="${{ steps.version.outputs.version }}"
+          BUNDLE="build/linux/x64/release/bundle"
+          
+          mkdir -p pkg/usr/bin
+          mkdir -p pkg/usr/lib/telegraph-downloader
+          mkdir -p pkg/usr/share/applications
+          mkdir -p pkg/usr/share/icons/hicolor/256x256/apps
+          
+          # Copy entire bundle to lib
+          cp -r "$BUNDLE"/* pkg/usr/lib/telegraph-downloader/
+          
+          # Create launcher script
+          cat > pkg/usr/bin/telegraph-downloader << 'LAUNCHER'
+          #!/bin/bash
+          exec /usr/lib/telegraph-downloader/telegraph_downloader "$@"
+          LAUNCHER
+          chmod +x pkg/usr/bin/telegraph-downloader
+          
+          # Desktop file
+          cat > pkg/usr/share/applications/telegraph-downloader.desktop << 'EOF'
+          [Desktop Entry]
+          Name=Telegraph Downloader
+          Comment=Download image albums from Telegraph
+          Exec=/usr/bin/telegraph-downloader
+          Icon=telegraph-downloader
+          Terminal=false
+          Type=Application
+          Categories=Utility;
+          EOF
+          
+          # Control file
+          mkdir -p pkg/DEBIAN
+          cat > pkg/DEBIAN/control << EOF
           Package: telegraph-downloader
-          Version: 1.0.2
+          Version: ${VERSION}
           Architecture: amd64
-          Depends: libgtk-3-0
+          Depends: libgtk-3-0, libglib2.0-0, libstdc++6
           Maintainer: Thewanwan
           Description: Telegraph image album downloader
+           A cross-platform tool to batch download image albums from Telegraph.
           EOF
-          dpkg-deb --build pkg build/telegraph-downloader_1.0.2_amd64.deb
+          
+          dpkg-deb --build pkg "build/telegraph-downloader_${VERSION}_amd64.deb"
+          echo "DEB created"
 
-      - name: Upload
+      - name: Upload ZIP
         uses: actions/upload-artifact@v4
         with:
           name: telegraph-downloader-linux
-          path: build/telegraph-downloader_1.0.2_amd64.deb
+          path: build/TelegraphDownloader_v*_linux.zip
+
+      - name: Upload DEB
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegraph-downloader-linux-deb
+          path: build/telegraph-downloader_*_amd64.deb
 
       - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: build/telegraph-downloader_1.0.2_amd64.deb
+          files: |
+            build/TelegraphDownloader_v*_linux.zip
+            build/telegraph-downloader_*_amd64.deb
