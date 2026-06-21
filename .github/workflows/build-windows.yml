@@ -17,8 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Visual Studio Build Tools
-        uses: microsoft/setup-msbuild@v2
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -26,13 +28,29 @@ jobs:
           flutter-version: '3.24.5'
           channel: 'stable'
 
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
-          vsversion: '2022'
+      - name: Detect Visual Studio version
+        shell: pwsh
+        run: |
+          $vsPath = & "C:\ProgramData\Chocolatey\bin\vswhere.exe" -products * -requires Microsoft.Component.MSBuild -property installationPath -latest
+          Write-Output "VS Path: $vsPath"
+          if ($vsPath -match "Visual Studio\\(\d+)") {
+            $vsNum = $Matches[1]
+            Write-Output "VS Version Number: $vsNum"
+            if ($vsNum -eq "18") {
+              $env:CMAKE_GENERATOR = "Visual Studio 18 2025"
+              Write-Output "Set CMAKE_GENERATOR to Visual Studio 18 2025"
+            } elseif ($vsNum -eq "17") {
+              $env:CMAKE_GENERATOR = "Visual Studio 17 2022"
+              Write-Output "Set CMAKE_GENERATOR to Visual Studio 17 2022"
+            } elseif ($vsNum -eq "16") {
+              $env:CMAKE_GENERATOR = "Visual Studio 16 2019"
+              Write-Output "Set CMAKE_GENERATOR to Visual Studio 16 2019"
+            }
+          }
+          echo "CMAKE_GENERATOR=$env:CMAKE_GENERATOR" >> $env:GITHUB_ENV
 
       - name: Generate Windows platform
+        shell: bash
         run: |
           flutter create --project-name telegraph_downloader --org com.telegraph --platforms=windows C:\temp\flutter_temp
           xcopy C:\temp\flutter_temp\windows windows /E /I /Y
@@ -48,6 +66,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Windows
+        shell: bash
         run: flutter build windows --release
 
       - name: Rename EXE
