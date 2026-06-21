@@ -136,7 +136,7 @@ class DownloadService extends ChangeNotifier {
     int failed = 0;
     int totalBytes = 0;
     final seenNames = <String, int>{};
-    final semaphore = _Semaphore(config.maxWorkers);
+    final semaphore = _Semaphore(config.maxWorkers.clamp(1, 20));
     final futures = <Future>[];
 
     for (int idx = 0; idx < urls.length; idx++) {

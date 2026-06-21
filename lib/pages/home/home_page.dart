@@ -159,15 +159,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return result ?? false;
   }
 
+  bool _canPop = true;
+
   @override
   Widget build(BuildContext context) {
     final downloadService = context.watch<DownloadService>();
+    _canPop = !downloadService.isDownloading;
 
     return PopScope(
-      canPop: !downloadService.isDownloading,
+      canPop: _canPop,
       onPopInvokedWithResult: (didPop, _) async {
         if (!didPop) {
-          await _onWillPop();
+          final shouldPop = await _onWillPop();
+          if (shouldPop && mounted) {
+            Navigator.of(context).pop();
+          }
         }
       },
       child: Scaffold(
@@ -222,7 +228,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   totalAlbums: downloadService.totalAlbums,
                 ),
                 const SizedBox(height: 12),
-              Expanded(
+                Expanded(
                 child: LogCard(
                   log: downloadService.currentLog,
                   logHistory: downloadService.logHistory,

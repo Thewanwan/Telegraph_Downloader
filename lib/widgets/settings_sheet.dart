@@ -4,8 +4,33 @@ import 'package:file_picker/file_picker.dart';
 import '../../app/services/config_service.dart';
 import '../../app/services/update_service.dart';
 
-class SettingsSheet extends StatelessWidget {
+class SettingsSheet extends StatefulWidget {
   const SettingsSheet({super.key});
+
+  @override
+  State<SettingsSheet> createState() => _SettingsSheetState();
+}
+
+class _SettingsSheetState extends State<SettingsSheet> {
+  String? _cachedPath;
+  bool _loadingPath = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPath();
+  }
+
+  Future<void> _loadPath() async {
+    final config = context.read<ConfigService>();
+    final path = await config.getEffectiveSavePath();
+    if (mounted) {
+      setState(() {
+        _cachedPath = path;
+        _loadingPath = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,10 +69,11 @@ class SettingsSheet extends StatelessWidget {
               Text('保存路径',
                   style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
-              FutureBuilder<String>(
-                future: config.getEffectiveSavePath(),
-                builder: (ctx, snap) {
-                  final path = snap.data ?? '加载中...';
+              Builder(
+                builder: (ctx) {
+                  final path = _loadingPath
+                      ? '加载中...'
+                      : (_cachedPath ?? '未设置');
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

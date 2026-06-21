@@ -112,14 +112,17 @@ class UpdateService {
       int receivedBytes = 0;
       final sink = file.openWrite(mode: FileMode.write);
 
-      await for (final chunk in response.stream) {
-        sink.add(chunk);
-        receivedBytes += chunk.length;
-        if (totalBytes > 0) {
-          onProgress(receivedBytes / totalBytes);
+      try {
+        await for (final chunk in response.stream) {
+          sink.add(chunk);
+          receivedBytes += chunk.length;
+          if (totalBytes > 0) {
+            onProgress(receivedBytes / totalBytes);
+          }
         }
+      } finally {
+        await sink.close();
       }
-      await sink.close();
 
       final result = await OpenFile.open(filePath);
       if (result.type != ResultType.done) {
