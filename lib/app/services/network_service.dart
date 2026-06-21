@@ -53,7 +53,6 @@ class NetworkService {
   }) async {
     int retries = 0;
     while (retries <= config.maxRetries) {
-      final file = File(savePath);
       try {
         final request = http.Request('GET', Uri.parse(url));
         request.headers.addAll(_headers);
@@ -64,41 +63,46 @@ class NetworkService {
         if (response.statusCode == 200) {
           final contentLength = response.contentLength;
           if (contentLength != null && contentLength > 100 * 1024 * 1024) {
-            throw Exception('文件过大 (${(contentLength / 1048576).toStringAsFixed(0)}MB)，跳过');
+            throw Exception(
+                '文件过大 (${(contentLength / 1048576).toStringAsFixed(0)}MB)，跳过');
           }
 
           int totalBytes = 0;
+          final file = File(savePath);
           final sink = file.openWrite(mode: FileMode.write);
-          await for (final chunk in response.stream) {
-            sink.add(chunk);
-            totalBytes += chunk.length;
+          try {
+            await for (final chunk in response.stream) {
+              sink.add(chunk);
+              totalBytes += chunk.length;
+            }
+          } finally {
+            await sink.close();
           }
-          await sink.close();
           return totalBytes;
         }
         if (response.statusCode == 429 || response.statusCode >= 500) {
           retries++;
           if (retries > config.maxRetries) break;
-          _cleanup(file);
+          _cleanup(File(savePath));
           await _backoff(retries);
           continue;
         }
         throw HttpException('HTTP ${response.statusCode}');
       } on TimeoutException {
-        _cleanup(file);
+        _cleanup(File(savePath));
         retries++;
         if (retries > config.maxRetries) rethrow;
         await _backoff(retries);
       } on SocketException {
-        _cleanup(file);
+        _cleanup(File(savePath));
         retries++;
         if (retries > config.maxRetries) rethrow;
         await _backoff(retries);
       } on HttpException {
-        _cleanup(file);
+        _cleanup(File(savePath));
         rethrow;
       } catch (e) {
-        _cleanup(file);
+        _cleanup(File(savePath));
         rethrow;
       }
     }

@@ -18,7 +18,7 @@ class AlbumProgress {
   });
 
   double get progress =>
-      totalImages > 0 ? downloaded / totalImages : 0.0;
+      totalImages > 0 ? (downloaded + failed) / totalImages : 0.0;
 
   String get statusText {
     switch (status) {

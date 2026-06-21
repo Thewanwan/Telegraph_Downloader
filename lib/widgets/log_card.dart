@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 class LogCard extends StatefulWidget {
   final String log;
+  final List<String> logHistory;
   final ScrollController scrollController;
 
   const LogCard({
     super.key,
     required this.log,
+    required this.logHistory,
     required this.scrollController,
   });
 
@@ -31,6 +33,10 @@ class _LogCardState extends State<LogCard> {
 
   @override
   Widget build(BuildContext context) {
+    final allLogs = widget.logHistory.isNotEmpty
+        ? widget.logHistory.join('\n')
+        : widget.log;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -51,6 +57,14 @@ class _LogCardState extends State<LogCard> {
                         fontWeight: FontWeight.bold,
                       ),
                 ),
+                const Spacer(),
+                if (widget.logHistory.isNotEmpty)
+                  Text(
+                    '${widget.logHistory.length} 条',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                  ),
               ],
             ),
             const Divider(),
@@ -64,7 +78,7 @@ class _LogCardState extends State<LogCard> {
                       : Colors.grey.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: widget.log.isEmpty
+                child: allLogs.isEmpty
                     ? Text(
                         '等待下载任务...',
                         style: TextStyle(
@@ -76,7 +90,7 @@ class _LogCardState extends State<LogCard> {
                     : SingleChildScrollView(
                         controller: widget.scrollController,
                         child: Text(
-                          widget.log,
+                          allLogs,
                           style: const TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 12,

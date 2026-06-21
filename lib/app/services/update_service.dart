@@ -90,13 +90,18 @@ class UpdateService {
     Function(double) onProgress,
     Function(String) onError,
   ) async {
+    final client = http.Client();
     try {
       final dir = await getTemporaryDirectory();
       final filePath = '${dir.path}/telegraph_$version.apk';
       final file = File(filePath);
 
       final request = http.Request('GET', Uri.parse(downloadUrl));
-      final response = await http.Client().send(request);
+      request.headers.addAll({
+        'User-Agent': 'TelegraphDownloader/$version',
+        'Accept': '*/*',
+      });
+      final response = await client.send(request);
 
       if (response.statusCode != 200) {
         onError('下载失败: HTTP ${response.statusCode}');
@@ -122,6 +127,8 @@ class UpdateService {
       }
     } catch (e) {
       onError('下载出错: $e');
+    } finally {
+      client.close();
     }
   }
 

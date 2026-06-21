@@ -184,18 +184,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               onPressed: () => context.read<ConfigService>().toggleTheme(),
               tooltip: '切换主题',
             ),
-          IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: () => showDialog(
-              context: context,
-              builder: (_) => HistoryDialog(
-                onRedownload: (urls) {
-                  _urlController.text = urls;
-                },
+            IconButton(
+              icon: const Icon(Icons.history),
+              onPressed: () => showDialog(
+                context: context,
+                builder: (_) => HistoryDialog(
+                  onRedownload: (urls) {
+                    _urlController.text = urls;
+                  },
+                ),
               ),
+              tooltip: '历史记录',
             ),
-            tooltip: '历史记录',
-          ),
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () => showModalBottomSheet(
@@ -222,12 +222,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   totalAlbums: downloadService.totalAlbums,
                 ),
                 const SizedBox(height: 12),
-                Expanded(
-                  child: LogCard(
-                    log: downloadService.currentLog,
-                    scrollController: _scrollController,
-                  ),
+              Expanded(
+                child: LogCard(
+                  log: downloadService.currentLog,
+                  logHistory: downloadService.logHistory,
+                  scrollController: _scrollController,
                 ),
+              ),
                 const SizedBox(height: 12),
                 _buildActionButtons(downloadService),
               ],

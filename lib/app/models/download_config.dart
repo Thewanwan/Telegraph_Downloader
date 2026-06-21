@@ -4,7 +4,6 @@ class DownloadConfig {
   int downloadTimeout;
   int maxRetries;
   double retryBackoff;
-  int chunkSize;
   String userAgent;
   String saveFormat;
   int imageQuality;
@@ -15,7 +14,6 @@ class DownloadConfig {
     this.downloadTimeout = 30,
     this.maxRetries = 3,
     this.retryBackoff = 0.5,
-    this.chunkSize = 8192,
     this.userAgent =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     this.saveFormat = 'original',
@@ -28,7 +26,6 @@ class DownloadConfig {
     int? downloadTimeout,
     int? maxRetries,
     double? retryBackoff,
-    int? chunkSize,
     String? userAgent,
     String? saveFormat,
     int? imageQuality,
@@ -39,7 +36,6 @@ class DownloadConfig {
       downloadTimeout: downloadTimeout ?? this.downloadTimeout,
       maxRetries: maxRetries ?? this.maxRetries,
       retryBackoff: retryBackoff ?? this.retryBackoff,
-      chunkSize: chunkSize ?? this.chunkSize,
       userAgent: userAgent ?? this.userAgent,
       saveFormat: saveFormat ?? this.saveFormat,
       imageQuality: imageQuality ?? this.imageQuality,
@@ -52,7 +48,6 @@ class DownloadConfig {
         'downloadTimeout': downloadTimeout,
         'maxRetries': maxRetries,
         'retryBackoff': retryBackoff,
-        'chunkSize': chunkSize,
         'userAgent': userAgent,
         'saveFormat': saveFormat,
         'imageQuality': imageQuality,
@@ -65,7 +60,6 @@ class DownloadConfig {
       downloadTimeout: json['downloadTimeout'] ?? 30,
       maxRetries: json['maxRetries'] ?? 3,
       retryBackoff: (json['retryBackoff'] ?? 0.5).toDouble(),
-      chunkSize: json['chunkSize'] ?? 8192,
       userAgent: json['userAgent'] ??
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       saveFormat: json['saveFormat'] ?? 'original',
