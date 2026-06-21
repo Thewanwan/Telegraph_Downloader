@@ -14,6 +14,9 @@ permissions:
 jobs:
   build-ios:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [simulator, device]
     steps:
       - uses: actions/checkout@v4
 
@@ -31,29 +34,70 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build iOS (debug for simulator)
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | head -1 | awk '{print $2}' | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build iOS Simulator
+        if: matrix.build_type == 'simulator'
         run: flutter build ios --debug --simulator
 
-      - name: Create ZIP
+      - name: Build iOS Device (unsigned)
+        if: matrix.build_type == 'device'
+        run: flutter build ios --release --no-codesign
+
+      - name: Package Simulator Build
+        if: matrix.build_type == 'simulator'
         run: |
-          SIM_DIR=$(find build -path "*/Runner.app" -type d | head -1)
+          VERSION="${{ steps.version.outputs.version }}"
+          SIM_DIR=$(find build -path "*/ios/ios*/Runner.app" -type d | head -1)
+          if [ -z "$SIM_DIR" ]; then
+            SIM_DIR=$(find build -path "*/Runner.app" -type d | head -1)
+          fi
           if [ -z "$SIM_DIR" ]; then
             echo "Runner.app not found:"
-            find build -type d | head -30
+            find build -type f -name "*.app" | head -10
             exit 1
           fi
           cd "$(dirname "$SIM_DIR")"
-          zip -r "$GITHUB_WORKSPACE/build/TelegraphDownloader-iOS.zip" Runner.app
+          zip -r "$GITHUB_WORKSPACE/build/TelegraphDownloader_iOS_v${VERSION}_simulator.zip" Runner.app
 
-      - name: Upload
+      - name: Package Device Build
+        if: matrix.build_type == 'device'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DEV_DIR=$(find build -path "*/ios/iphoneos/Runner.app" -type d | head -1)
+          if [ -z "$DEV_DIR" ]; then
+            DEV_DIR=$(find build -path "*/iphoneos/Runner.app" -type d | head -1)
+          fi
+          if [ -z "$DEV_DIR" ]; then
+            echo "Runner.app not found:"
+            find build -type f -name "*.app" | head -10
+            exit 1
+          fi
+          cd "$(dirname "$DEV_DIR")"
+          zip -r "$GITHUB_WORKSPACE/build/TelegraphDownloader_iOS_v${VERSION}_device.zip" Runner.app
+
+      - name: Upload Simulator
+        if: matrix.build_type == 'simulator'
         uses: actions/upload-artifact@v4
         with:
-          name: telegraph-downloader-ios
-          path: build/TelegraphDownloader-iOS.zip
+          name: telegraph-downloader-ios-simulator
+          path: build/TelegraphDownloader_iOS_*_simulator.zip
+
+      - name: Upload Device
+        if: matrix.build_type == 'device'
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegraph-downloader-ios-device
+          path: build/TelegraphDownloader_iOS_*_device.zip
 
       - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: build/TelegraphDownloader-iOS.zip
+          files: |
+            build/TelegraphDownloader_iOS_*.zip
