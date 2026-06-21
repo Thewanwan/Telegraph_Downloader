@@ -28,52 +28,37 @@ jobs:
           flutter-version: '3.24.5'
           channel: 'stable'
 
-      - name: Detect Visual Studio version
-        shell: pwsh
-        run: |
-          $vsPath = & "C:\ProgramData\Chocolatey\bin\vswhere.exe" -products * -requires Microsoft.Component.MSBuild -property installationPath -latest
-          Write-Output "VS Path: $vsPath"
-          if ($vsPath -match "Visual Studio\\(\d+)") {
-            $vsNum = $Matches[1]
-            Write-Output "VS Version Number: $vsNum"
-            if ($vsNum -eq "18") {
-              $env:CMAKE_GENERATOR = "Visual Studio 18 2025"
-              Write-Output "Set CMAKE_GENERATOR to Visual Studio 18 2025"
-            } elseif ($vsNum -eq "17") {
-              $env:CMAKE_GENERATOR = "Visual Studio 17 2022"
-              Write-Output "Set CMAKE_GENERATOR to Visual Studio 17 2022"
-            } elseif ($vsNum -eq "16") {
-              $env:CMAKE_GENERATOR = "Visual Studio 16 2019"
-              Write-Output "Set CMAKE_GENERATOR to Visual Studio 16 2019"
-            }
-          }
-          echo "CMAKE_GENERATOR=$env:CMAKE_GENERATOR" >> $env:GITHUB_ENV
-
       - name: Generate Windows platform
-        shell: bash
+        shell: pwsh
         run: |
           flutter create --project-name telegraph_downloader --org com.telegraph --platforms=windows C:\temp\flutter_temp
           xcopy C:\temp\flutter_temp\windows windows /E /I /Y
 
       - name: Get version
         id: version
-        shell: bash
+        shell: pwsh
         run: |
-          VERSION=$(grep 'version:' pubspec.yaml | head -1 | awk '{print $2}' | cut -d'+' -f1)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          $content = Get-Content pubspec.yaml -Raw
+          if ($content -match 'version:\s+(\S+)') {
+            $ver = $Matches[1].Split('+')[0]
+            echo "version=$ver" >> $env:GITHUB_OUTPUT
+            Write-Output "Version: $ver"
+          }
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build Windows
-        shell: bash
         run: flutter build windows --release
 
       - name: Rename EXE
-        shell: bash
+        shell: pwsh
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          cp build/windows/x64/runner/Release/telegraph_downloader.exe "build/TelegraphDownloader_v${VERSION}.exe"
+          $version = "${{ steps.version.outputs.version }}"
+          $src = "build\windows\x64\runner\Release\telegraph_downloader.exe"
+          $dst = "build\TelegraphDownloader_v${version}.exe"
+          Copy-Item $src $dst
+          Write-Output "Renamed to $dst"
 
       - name: Upload
         uses: actions/upload-artifact@v4
